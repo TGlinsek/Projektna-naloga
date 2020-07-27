@@ -2,6 +2,8 @@
 # https://www.khanacademy.org/computer-programming/box-it/5185240348000256
 # https://www.mathsisfun.com/games/boxup-puzzle.html
 
+import itertools
+
 
 def vsi_elementi_seznama_so_isti(seznam):  # pomožna funkcija
     if len(seznam) == 0:
@@ -13,6 +15,70 @@ def vsi_elementi_seznama_so_isti(seznam):  # pomožna funkcija
     return True
 
 
+class Koordinate:
+
+    def __init__(self, x=None, y=None, zgornja_meja_x=float("inf"), zgornja_meja_y=float("inf")):  # zgornja meja ni vključena v možne koordinate
+        self.x = x
+        self.y = y
+        self.zgornja_meja_x = zgornja_meja_x
+        self.zgornja_meja_y = zgornja_meja_y 
+    
+    def nastavi_x(self, x):
+        if self.zgornja_meja_x <= x:
+            x = self.zgornja_meja_x - 1
+        if x < 0:
+            x = 0
+        self.x = x
+    
+    def nastavi_y(self, y):
+        if self.zgornja_meja_y <= y:
+            y = self.zgornja_meja_y - 1
+        if y < 0:
+            y = 0
+        self.y = y
+
+    def spremeni_x_za(self, offset):
+        self.nastavi_x(self.x + offset)
+    
+    def spremeni_y_za(self, offset):
+        self.nastavi_y(self.y + offset)
+    
+    def kopiraj_koordinate_od_drugega(self, druge_koordinate):
+        self.nastavi_x(druge_koordinate.x)
+        self.nastavi_y(druge_koordinate.y)
+    
+    def kopiraj_svoje_koordinate(self):  # če napišemo samo return self, ne deluje pravilno
+        nove_koord = Koordinate()  # zaenkrat sta koordinati še None
+        nove_koord.kopiraj_koordinate_od_drugega(self)  # to naredimo zato, da objekta ne kažeta na isto stvar v pomnilniku
+        return nove_koord
+
+    def vrni_levega_soseda(self):
+        nove_koord = self.kopiraj_svoje_koordinate() 
+        nove_koord.spremeni_x_za(-1)
+        return nove_koord
+    
+    def vrni_desnega_soseda(self):
+        nove_koord = self.kopiraj_svoje_koordinate()
+        nove_koord.spremeni_x_za(1)
+        return nove_koord
+
+    def vrni_zgornjega_soseda(self):  # višje vrstice imajo manjšo y-koordinato, kot pri matrikah (ne kot pri kartezičnem koordinatnem sistemu)
+        nove_koord = self.kopiraj_svoje_koordinate()
+        nove_koord.spremeni_y_za(-1)
+        return nove_koord
+
+    def vrni_spodnjega_soseda(self):  # višje vrstice imajo manjšo y-koordinato, kot pri matrikah (ne kot pri kartezičnem koordinatnem sistemu)
+        nove_koord = self.kopiraj_svoje_koordinate()
+        nove_koord.spremeni_y_za(1)
+        return nove_koord
+    
+    def __repr__(self):
+        return str((self.x, self.y))
+
+    def __eq__(self, drugo):   # to rabimo, ker zgleda da da če daš "==" vmes, potem gleda ali sta to en in isti objekt, zato vrne False, tudi če predstavljata objekta iste koordinate
+        return self.x == drugo.x and self.y == drugo.y
+
+
 class Matrika:
 
     def __init__(self, seznam_seznamov):  # notranji seznami so vrstice
@@ -20,19 +86,27 @@ class Matrika:
         self.širina = len(self.seznam_seznamov[0])
         self.višina = len(self.seznam_seznamov)
     
-    def preberi_člen(self, x_koord, y_koord):
-        return self.seznam_seznamov[y_koord][x_koord]
+    def preberi_člen(self, koord):
+        return self.seznam_seznamov[koord.y][koord.x]
     
-    def zamenjaj_člen(self, x_koord, y_koord, člen):
-        self.seznam_seznamov[y_koord][x_koord] = člen
+    def zamenjaj_člen(self, koord, člen):
+        self.seznam_seznamov[koord.y][koord.x] = člen
     
+    def kopiraj_sebe(self):
+        nov_seznam = []
+        for sez in self.seznam_seznamov:
+            nov_seznam.append([])
+            for i in sez:  # tukaj gremo vsak element posebej kopirati. Če kopiramo le sezname, ne deluje (ne vem še, zakaj točno ne). Drugače se tudi original spremeni, ko spremenimo kopijo.
+                nov_seznam[-1].append(i)
+        return Matrika(nov_seznam)
+
     def upodobitev(self):  # predstava, predstavitev, (re)prezentacija
         string = "┌"
         string += (2 * self.širina + 1) * " "
         string += "┐\n"
-        for i in self.seznam_seznamov:
+        for sez in self.seznam_seznamov:
             string += "│ "
-            string += " ".join(i)
+            string += " ".join(("-" if element == "" else element) for element in sez)  # k sreči so členi matrike vsi nizi
             string += " │"
             string += "\n"
         string += "└"
@@ -40,12 +114,10 @@ class Matrika:
         string += "┘"
         return string
     
-    def __repr__():
+    def __repr__(self):
         return self.upodobitev()
     
-    def __str__():
-        return self.upodobitev()
-
+    __str__ = __repr__
 
 
 nasprotne_smeri = {"s": "j", "j": "s", "v": "z", "z": "v"}
@@ -62,14 +134,39 @@ def razberi(niz):
         return False
     
 
+def razdeli(niz, smer):
+    if niz == "":
+        return ("", "")
+    meja = 0
+    for indeks_od_zadaj, znak in enumerate(niz[::-1]):
+        if znak == smer or znak == "-":
+            meja += 1
+            continue
+        break
+    pomišljajev_v_ostanku = len(niz) - meja  # to niso nujno vsi pomišljaji
+    prenos = niz[:pomišljajev_v_ostanku]
+    
+    if meja == 0:
+        ostanek = ""  # lahko pa bi tudi samo spremenili pomišljajev_v_ostanku v 0. To je samo posledica našega formata.
+    else:
+        ostanek = pomišljajev_v_ostanku * "-" + niz[pomišljajev_v_ostanku:]
+    return (ostanek, prenos)
+
+
 def združi(prvi_člen, drugi_člen):
     vsota = ""
     for par in itertools.zip_longest(prvi_člen, drugi_člen, fillvalue="-"):
         vsota += par[0] if par[1] == "-" else par[1]
     return vsota
 
+
+def povečaj(niz, indeks):  # kapitalizira indeksti znak v nizu
+    return niz[:indeks] + niz[indeks].upper() + niz[indeks + 1:]
+
+
 class Level:  # dejansko matrika, ki se spreminja
 
+    # vsi členi seznama koord_barvnih_škatel bodo razredi Koordinate
     def __init__(self, seznam_seznamov, začetni_koord, koord_barvnih_škatel):  # leveli bodo vedno taki (tudi v level editorju ne boš mogel narediti tako), da so škatle na začetku posebej (ni dveh skupaj)
         self.matrika = Matrika(seznam_seznamov)  # se spreminja
         self.koord_igralca = začetni_koord  # nabor (x, y) (nikoli ne bomo spreminjali vsako koordinato posebej, ampak vsakič obe naenkrat. Torej lahko uporabimo nabor)
@@ -93,8 +190,9 @@ class Level:  # dejansko matrika, ki se spreminja
 
         To bo naredila funkcija razberi().
         """
+        slovar = {}
         for par_koordinat in koord_barvnih_škatel:  # vrstni red v seznamu "koord_barvnih_škatel" ni pomemben. V vsakem primeru pride (oz. bi moral priti) isti rezultat
-            člen_matrike = self.matrika[par_koordinat]
+            člen_matrike = self.matrika.preberi_člen(par_koordinat)
             smer, velikost = razberi(člen_matrike)
             if smer not in ["s", "j", "v", "z"]:
                 raise ValueError("Smer ni ustrezna")
@@ -138,25 +236,30 @@ class Level:  # dejansko matrika, ki se spreminja
         
         zadnji znak v nizu nikoli ne more biti pomišljaj ("-")
         """
-    def __repr__(self):
-        return self.matrika
     
     def __str__(self):
-        return self.matrika
+        kopija = self.matrika.kopiraj_sebe()
+        for ključ in self.slovar_barvnih_škatel:  # za upodobitev položajev barvnih škatel. Kapitalizirane črke pomenijo barvne škatle
+            koord = self.slovar_barvnih_škatel[ključ][0]
+            kopija.zamenjaj_člen(koord, povečaj(kopija.preberi_člen(koord), int(ključ) - 1))
+        kopija.zamenjaj_člen(self.koord_igralca, kopija.preberi_člen(self.koord_igralca) + "+")  # "+" bo označeval igralca
+        return str(kopija)
     
+    __repr__ = __str__
+
     def preveri_okolico(self, smer):  # vrne True, kadar se lahko premakne v to smer
         nasprotna_smer = nasprotne_smeri[smer]
-        polje_z_igralcem = self.matrika[self.koord_igralca[1], self.koord_igralca[0]]  # člen matrike, kjer je igralec
+        polje_z_igralcem = self.matrika.preberi_člen(self.koord_igralca)  # člen matrike, kjer je igralec
         koord_od_drugega_polja = None
         if nasprotna_smer == "v":  # gremo v levo
-            koord_od_drugega_polja = (self.koord_igralca[0] - 1, self.koord_igralca[1])
+            koord_od_drugega_polja = self.koord_igralca.vrni_levega_soseda()
         elif nasprotna_smer == "z":
-            koord_od_drugega_polja = (self.koord_igralca[0] + 1, self.koord_igralca[1])
-        elif nasprotna_smer == "j":
-            koord_od_drugega_polja = (self.koord_igralca[0], self.koord_igralca[1] - 1)
+            koord_od_drugega_polja = self.koord_igralca.vrni_desnega_soseda()
+        elif nasprotna_smer == "j":  # gremo gor
+            koord_od_drugega_polja = self.koord_igralca.vrni_zgornjega_soseda()
         elif nasprotna_smer == "s":
-            koord_od_drugega_polja = (self.koord_igralca[0], self.koord_igralca[1] + 1)
-        drugo_polje = self.matrika[koord_od_drugega_polja[1]][koord_od_drugega_polja[0]]  # levo, desno, gornje ...
+            koord_od_drugega_polja = self.koord_igralca.vrni_spodnjega_soseda()
+        drugo_polje = self.matrika.preberi_člen(koord_od_drugega_polja)  # levo, desno, gornje ...
         
         if drugo_polje == "!":
             return False  # skala
@@ -186,17 +289,21 @@ class Level:  # dejansko matrika, ki se spreminja
         "szz" v smeri zahoda: "-zz" ostane, "s" gre stran
         "zzz" v smeri zahoda: "zzz" ostane, "" gre stran
         "sjs" v smeri zahoda: "" ostane, "sjs" gre stran (ne loči se)
-        "szs" ali"zzs" v smeri zahoda: ne loči se, oz., ostane "", vse gre stran
+        "szs" ali "zzs" v smeri zahoda: ne loči se, oz., ostane "", vse gre stran
+        "": ostane "", stran gre "".
+        "z" v smeri z: ostane "z", prenos ""
+        "s" v smeri z: ostane "", prenos "s"
+        "z-z" v smeri z: ostane "z-z", prenos ""
+        "zs-z" v smeri z: ostane "---z", gre "zs"
+        "z-sz" v smeri z: ostane "---z", gre "z-s"
+        "z-s-z-j-z" v smeri z: ostane "--------z", gre "z-s-z-j"
 
         To operacijo bomo opisali v funkciji razdeli()
         """
+
         ostanek, prenos = razdeli(polje_z_igralcem, smer)  # sprejme prvotni člen in pa smer ter vrne nabor (ostane, gre stran)
         
-        
-
-        
-
-        zunanja_velikost_prenosa = len(prenos) # dejansko igralca (štejemo le škatle, ki grejo z njim)
+        zunanja_velikost_prenosa = len(prenos)  # dejansko igralca (štejemo le škatle, ki grejo z njim)
         if notranja_velikost_drugega_polja > zunanja_velikost_prenosa:  # če paše not
 
             # če so koordinate barvnih škatel iste kot koordinate igralca, potem poglej, ali so barvne škatle v ostanku ali prenosu (saj v tem primeru v polju mora biti prava usmerjenost na pravem mestu, saj poznamo velikost škatel)
@@ -229,22 +336,21 @@ class Level:  # dejansko matrika, ki se spreminja
     def premik_v_smer(self, smer):  # to bo uredilo matriko self.matrika
         # leva smer pomeni smer "z"
         if smer == "z":
-            if self.koord_igralca[0] == 0:
+            if self.koord_igralca.x == 0:
                 return False  # False vrnemo, če ni spremembe, True pa, če je
         if smer == "v":
-            if self.koord_igralca[0] == self.matrika.širina - 1:
+            if self.koord_igralca.x == self.matrika.širina - 1:
                 return False
         if smer == "s":
-            if self.koord_igralca[1] == 0:
+            if self.koord_igralca.y == 0:
                 return False
         if smer == "j":
-            if self.koord_igralca[1] == self.matrika.višina - 1:
+            if self.koord_igralca.y == self.matrika.višina - 1:
                 return False
         
-        okolica = preveri_okolico(nasprotne_smeri[smer])  # tudi barvne škatle so notri vključene
+        okolica = self.preveri_okolico(smer)  # tudi barvne škatle so notri vključene
         if okolica:  # če ni False
             ostanek, prenos, polje, koord_drugega_polja, b_škatle = okolica
-
             """
             Ustvarili bomo novo polje z naslednjo operacijo:
 
@@ -256,28 +362,25 @@ class Level:  # dejansko matrika, ki se spreminja
 
             To operacijo bomo opisali v funkciji združi()
             """
-
             
             novo_polje = združi(prenos, polje)
-            print("Novo polje: " + novo_polje)
-            self.matrika[koord_drugega_polja[1]][koord_drugega_polja[0]] = novo_polje  # posodobimo polje, kamor se je premaknil igralec
-            self.matrika[self.koord_igralca[1]][self.koord_igralca[0]] = ostanek  # izpraznimo polje, kjer je bil igralec, razen če imamo ostanek
-            self.koord_igralca = koord_drugega_polja  # posodobimo koordinate
+
+            self.matrika.zamenjaj_člen(koord_drugega_polja, novo_polje)  # posodobimo polje, kamor se je premaknil igralec
+            self.matrika.zamenjaj_člen(self.koord_igralca, ostanek)  # izpraznimo polje, kjer je bil igralec, razen če imamo ostanek
+            self.koord_igralca.kopiraj_koordinate_od_drugega(koord_drugega_polja)  # posodobimo koordinate
             
             # tukaj posodobimo še morebitne koordinate barvnih škatel
             for ključ in b_škatle:
                 if b_škatle[ključ] == True:
-                    self.slovar_barvnih_škatel[ključ][0] = koord_drugega_polja
-
+                    self.slovar_barvnih_škatel[ključ][0].kopiraj_koordinate_od_drugega(koord_drugega_polja)
             return True
         return False
-
 
     # za vsako polje v matriki lahko definiramo največjo velikost igralca (v kok vlki škatli je lahk), da še lahk gre na tisto polje. Če je prazno polje, je največja velikost neomejena
     # igralec po premiku dobi novo velikost, ki ni nujno ista kot ravnokar definirana količina. Dobimo jo pač s primerjavo členov matrike
 
     def preveri_ali_na_cilju(self):
-        return vsi_elementi_seznama_so_isti(self.koord_barvnih_škatel)  # pri naborih nam ni treba skrbet za kazalce
+        return vsi_elementi_seznama_so_isti([self.slovar_barvnih_škatel[ključ][0] for ključ in self.slovar_barvnih_škatel.keys()])  # pri naborih nam ni treba skrbet za kazalce
 
 
 class VsiLeveli:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level. Torej bomo imeli slovar
@@ -296,12 +399,3 @@ class VsiLeveli:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level.
                 return None  # to je bil zadnji level
         else:
             return None  # custom leveli niso razporejeni po vrsti
-
-
-
-"""
-TODO:
-- naredi Class Koordinate?
-- tam, kjer se uporablja matrika, ustrezno uporabi njene metode
-- napisati funkcijo razdeli()
-"""
