@@ -1,6 +1,6 @@
 # samo za testiranje delovanja modela
 # from model import Level
-from model import Level, Koordinate
+from model import Nivo
 
 
 def zahtevaj_smer():
@@ -19,7 +19,8 @@ def izpis_položaja(igra):
 
 def pozeni_tekstovni_vmesnik():
     # nek poljuben level:
-    igra = Level([["", "", ""], ["", "z", ""], ["", "", "-s"]], Koordinate(0, 0), [Koordinate(2, 2), Koordinate(1, 1)])  # dejansko koordinate niso nujno v vrstnem redu, kjer bi škatle naraščale po velikosti. Lahko poskrbimo tudi za to!
+    igra = Nivo([["", "", ""], ["", "z", ""], ["", "", "-s"]], (0, 0), [(2, 2), (1, 1)])  # dejansko koordinate niso nujno v vrstnem redu, kjer bi škatle naraščale po velikosti. Navsezadnje bodo vpisane v slovar.
+    # ti nivoji bodo na koncu vsi shranjeni v objektu VsiNivoji, ali kaj podobnega
     while True:
         izpis_položaja(igra)
         if igra.preveri_ali_na_cilju():

@@ -17,9 +17,12 @@ def vsi_elementi_seznama_so_isti(seznam):  # pomožna funkcija
 
 class Koordinate:
 
-    def __init__(self, x=None, y=None, zgornja_meja_x=float("inf"), zgornja_meja_y=float("inf")):  # zgornja meja ni vključena v možne koordinate
-        self.x = x
-        self.y = y
+    def __init__(self, nabor=None, zgornja_meja_x=float("inf"), zgornja_meja_y=float("inf")):  # zgornja meja ni vključena v možne koordinate
+        if nabor is None:
+            self.x = None
+            self.y = None
+        else:
+            self.x, self.y = nabor
         self.zgornja_meja_x = zgornja_meja_x
         self.zgornja_meja_y = zgornja_meja_y 
     
@@ -164,13 +167,16 @@ def povečaj(niz, indeks):  # kapitalizira indeksti znak v nizu
     return niz[:indeks] + niz[indeks].upper() + niz[indeks + 1:]
 
 
-class Level:  # dejansko matrika, ki se spreminja
+class Nivo:  # dejansko matrika, ki se spreminja
 
     # vsi členi seznama koord_barvnih_škatel bodo razredi Koordinate
-    def __init__(self, seznam_seznamov, začetni_koord, koord_barvnih_škatel):  # leveli bodo vedno taki (tudi v level editorju ne boš mogel narediti tako), da so škatle na začetku posebej (ni dveh skupaj)
+    def __init__(self, seznam_seznamov, začetni_koord, seznam_naborov_barvnih_škatel):  # leveli bodo vedno taki (tudi v level editorju ne boš mogel narediti tako), da so škatle na začetku posebej (ni dveh skupaj)
         self.matrika = Matrika(seznam_seznamov)  # se spreminja
-        self.koord_igralca = začetni_koord  # nabor (x, y) (nikoli ne bomo spreminjali vsako koordinato posebej, ampak vsakič obe naenkrat. Torej lahko uporabimo nabor)
-        
+        self.koord_igralca = Koordinate(začetni_koord)  # nabor (x, y) (nikoli ne bomo spreminjali vsako koordinato posebej, ampak vsakič obe naenkrat. Torej lahko uporabimo nabor)
+        seznam_objektov_barvnih_škatel = []
+        for nabor in seznam_naborov_barvnih_škatel:
+            seznam_objektov_barvnih_škatel.append(Koordinate(nabor))  # nabore koordinat bomo spreminjali v objekt Koordinate
+
         # koord_barvnih_škatel  # seznam naborov (po defaultu dveh, lahko več, ne more pa bit manj kot dve)
 
         # od leve proti desni naraščajo velikosti
@@ -191,7 +197,7 @@ class Level:  # dejansko matrika, ki se spreminja
         To bo naredila funkcija razberi().
         """
         slovar = {}
-        for par_koordinat in koord_barvnih_škatel:  # vrstni red v seznamu "koord_barvnih_škatel" ni pomemben. V vsakem primeru pride (oz. bi moral priti) isti rezultat
+        for par_koordinat in seznam_objektov_barvnih_škatel:  # vrstni red v seznamu "koord_barvnih_škatel" ni pomemben. V vsakem primeru pride (oz. bi moral priti) isti rezultat
             člen_matrike = self.matrika.preberi_člen(par_koordinat)
             smer, velikost = razberi(člen_matrike)
             if smer not in ["s", "j", "v", "z"]:
@@ -237,13 +243,26 @@ class Level:  # dejansko matrika, ki se spreminja
         zadnji znak v nizu nikoli ne more biti pomišljaj ("-")
         """
     
-    def __str__(self):
+    def dodaj_barvno_škatlo(self, velikost, koordinate):  # za level editor. Default smer je sever. Kasneje lahko še rotiramo
+        pass
+
+    def odstrani_barvno_škatlo(self, velikost):
+        pass
+    
+    def rotiraj_škatlo(self, koordinate, smer):  # smer je tukaj lahko ali v smeri urinega kazalca ali pa proti. "+" bo v smeri proti, "-" v nasprotni.
+        pass
+
+    # tole je namenjeno le za prikaz igralcu:
+    def matrika_z_igralcem(self):  # in tudi s poudarjenimi barvnimi škatlami
         kopija = self.matrika.kopiraj_sebe()
         for ključ in self.slovar_barvnih_škatel:  # za upodobitev položajev barvnih škatel. Kapitalizirane črke pomenijo barvne škatle
             koord = self.slovar_barvnih_škatel[ključ][0]
             kopija.zamenjaj_člen(koord, povečaj(kopija.preberi_člen(koord), int(ključ) - 1))
         kopija.zamenjaj_člen(self.koord_igralca, kopija.preberi_člen(self.koord_igralca) + "+")  # "+" bo označeval igralca
-        return str(kopija)
+        return kopija
+
+    def __str__(self):
+        return str(self.matrika_z_igralcem())
     
     __repr__ = __str__
 
@@ -383,19 +402,73 @@ class Level:  # dejansko matrika, ki se spreminja
         return vsi_elementi_seznama_so_isti([self.slovar_barvnih_škatel[ključ][0] for ključ in self.slovar_barvnih_škatel.keys()])  # pri naborih nam ni treba skrbet za kazalce
 
 
-class VsiLeveli:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level. Torej bomo imeli slovar
+class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level. Torej bomo imeli slovar
     
-    def __init__(self, datoteka_z_leveli):
-        self.datoteka_z_leveli = datoteka_z_leveli
+    def __init__(self, datoteka_z_nivoji):
+        self.datoteka_z_nivoji = datoteka_z_nivoji
         # oblika: {"0": matrika, "1": ..., "custom_level": ...}
 
-        self.število_levelov = max([int(ključ) for ključ in self.datoteka_z_leveli.keys() if ključ.isdigit()])  # vsi ključi bodo stringi
+        self.število_nivojev = max([int(ključ) for ključ in self.datoteka_z_nivoji.keys() if ključ.isdigit()])  # vsi ključi bodo stringi
 
-    def naslednji_level(self, trenutni_level_id):
-        if type(trenutni_level_id) is int:
-            if 0 <= trenutni_level_id < self.število_levelov:
-                return trenutni_level_id + 1
-            elif trenutni_level_id == self.število_levelov:
+    def naslednji_nivo(self, id_trenutnega_nivoja):
+        if type(id_trenutnega_nivoja) is int:
+            if 0 <= id_trenutnega_nivoja < self.število_nivojev:
+                return id_trenutnega_nivoja + 1
+            elif id_trenutnega_nivoja == self.število_nivojev:
                 return None  # to je bil zadnji level
         else:
             return None  # custom leveli niso razporejeni po vrsti
+
+
+def vrni_prazen_nivo(širina, višina):  # imel bo igralca v levem zgornjem kotu, potem pa dve barvni škatli: manjšo desno zgoraj, večjo desno spodaj
+    seznam_seznamov = []
+    for i in range(višina):
+        seznam_seznamov.append([])
+        for j in range(širina):
+            seznam_seznamov[-1].append("")
+    seznam_seznamov[0][širina - 1] = "s"
+    seznam_seznamov[višina - 1][širina - 1] = "-s"
+    return Nivo(seznam_seznamov, Koordinate(0, 0), [Koordinate(širina - 1, 0), Koordinate(širina - 1, višina - 1)])
+
+            
+class UrejevalnikNivojev:  # level editor
+
+    # None v primeru da začnemo nov nivo od začetka
+    def __init__(self, trenutni_nivo=None, ime=None, širina=None, višina=None):  # klicalo se bo tako: UrejevalnikNivojev(VsiNivoji[ključ], ključ)
+        if trenutni_nivo is None:
+            self.trenutni_nivo = vrni_prazen_nivo(širina, višina)
+        else:
+            self.trenutni_nivo = trenutni_nivo  # Level
+            self.ime = ime
+    
+    def izrisi(self):
+        pass
+
+    def dodaj_element(self, element, polje):  # element je nek niz, kot smo imeli pri nivojih. Dva elementa ne moreta biti na istem mestu na začetku.
+        pass
+    # element se izbriše tako, da dodaš na tisto mesto prazen string
+
+    
+    def izbrisi_vse(self):  # resetira nivo
+        self.trenutni_nivo = vrni_prazen_nivo(self.trenutni_nivo.matrika.širina, self.trenutni_nivo.matrika.višina)  # vzame kar iste dimenzije kot so bile pred izbrisom
+    
+    
+    def dodaj_level(self):
+        # dodamo nov level v seznam VsiNivoji, pod novim imenom
+        pass
+
+    # ko submitaš level, ni poti nazaj in je vsem viden.
+
+    def rotiraj(self, koordinate):
+        pass
+
+
+
+
+
+
+
+
+
+
+
