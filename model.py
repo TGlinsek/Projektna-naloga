@@ -55,7 +55,7 @@ class Koordinate:
         nove_koord.kopiraj_koordinate_od_drugega(self)  # to naredimo zato, da objekta ne kažeta na isto stvar v pomnilniku
         return nove_koord
 
-    def vrni_levega_soseda(self):
+    def vrni_levega_soseda(self):  # to bi verjetno lahko spravili v eno samo vrstico
         nove_koord = self.kopiraj_svoje_koordinate() 
         nove_koord.spremeni_x_za(-1)
         return nove_koord
@@ -74,6 +74,9 @@ class Koordinate:
         nove_koord = self.kopiraj_svoje_koordinate()
         nove_koord.spremeni_y_za(1)
         return nove_koord
+
+    def koordinate_gredo_v_matriko_dimenzij(širina, višina):
+        return 0 <= self.x < širina and 0 <= self.y < višina
     
     def __repr__(self):
         return str((self.x, self.y))
@@ -125,6 +128,8 @@ class Matrika:
 
 nasprotne_smeri = {"s": "j", "j": "s", "v": "z", "z": "v"}
 
+rotirane_smeri = {"s": "z", "z": "j", "j": "v", "v": "s"}  # pozitivna smer
+
 def razberi(niz):
     if niz == "":
         return False
@@ -165,6 +170,15 @@ def združi(prvi_člen, drugi_člen):
 
 def povečaj(niz, indeks):  # kapitalizira indeksti znak v nizu
     return niz[:indeks] + niz[indeks].upper() + niz[indeks + 1:]
+
+
+def škatla(velikost, smer):  # vrne niz za posamezno škatlo. Velikost 3 je npr. "--s"
+    return (velikost - 1) * "-" + smer.lower()
+
+def je_škatla(člen):
+    if člen == "":
+        return False
+    return člen[-1] in ["s", "j", "v", "z"] and člen[:-1] == "-" * (len(člen) - 1)
 
 
 class Nivo:  # dejansko matrika, ki se spreminja
@@ -243,19 +257,48 @@ class Nivo:  # dejansko matrika, ki se spreminja
         zadnji znak v nizu nikoli ne more biti pomišljaj ("-")
         """
     
-    def dodaj_barvno_škatlo(self, velikost, koordinate):  # za level editor. Default smer je sever. Kasneje lahko še rotiramo
-        pass
+    def dodaj_element(self, koordinate, člen):  # za level editor. Default smer je sever. Kasneje lahko še rotiramo
+        if self.matrika_z_igralcem.preberi_člen(koordinate) == "":  # še za igralca
+            self.matrika.zamenjaj_člen(koordinate, člen)
+        else:
+            raise ValueError("Polje je že zasedeno!")
+
+    def dodaj_škatlo(self, velikost, koordinate):
+        self.dodaj_element(koordinate, škatla(velikost, "s"))
+    
+
+    def dodaj_barvno_škatlo(self, velikost, koordinate):
+        dodaj_škatlo(velikost, koordinate)
+        if str(velikost) in self.slovar_barvnih_škatel.keys():
+            raise ValueError("Velikost barvne škatle je že v slovarju!")
+        else:
+            self.slovar_barvnih_škatel[str(velikost)] = (koordinate, "s")
+    
+    def odstrani_element(self, koordinate):
+        self.matrika.zamenjaj_člen(koordinate, "")
 
     def odstrani_barvno_škatlo(self, velikost):
-        pass
+        self.odstrani_element(self.slovar_barvnih_škatel[str(velikost)][0])  # odstrani element na teh koordinatah
+        self.slovar_barvnih_škatel[str(velikost)] = None  # upam da bo to dovolj za "izbris" škatle
     
     def rotiraj_škatlo(self, koordinate, smer):  # smer je tukaj lahko ali v smeri urinega kazalca ali pa proti. "+" bo v smeri proti, "-" v nasprotni.
-        pass
+        niz = self.matrika.preberi_člen(koordinate)
+        if je_škatla(niz):
+            s = rotirane_smeri[niz[-1]]
+            self.matrika.zamenjaj_člen(koordinate, škatla(len(niz), s if smer == "+" else nasprotne_smeri[s]))
+        else:
+            raise ValueError("To ni škatla! Le škatle se da rotirati.")
 
+    def prestavi_igralca(self, koordinate):
+        if koordinate.koordinate_gredo_v_matriko_dimenzij(self.matrika.širina, self.matrika.višina):
+            self.koord_igralca.kopiraj_koordinate_od_drugega(koordinate)
+        else:
+            raise ValueError("Koordinate niso ustrezne! Koordinate " + koordinate + " ne gredo v matriko širine " + str(self.matrika.širina) + " in višine " + str(self.matrika.višina) + ".")
+    
     # tole je namenjeno le za prikaz igralcu:
     def matrika_z_igralcem(self):  # in tudi s poudarjenimi barvnimi škatlami
         kopija = self.matrika.kopiraj_sebe()
-        for ključ in self.slovar_barvnih_škatel:  # za upodobitev položajev barvnih škatel. Kapitalizirane črke pomenijo barvne škatle
+        for ključ in self.slovar_barvnih_škatel:  # za upodobitev položajev barvnih škatel. Velike črke pomenijo barvne škatle
             koord = self.slovar_barvnih_škatel[ključ][0]
             kopija.zamenjaj_člen(koord, povečaj(kopija.preberi_člen(koord), int(ključ) - 1))
         kopija.zamenjaj_člen(self.koord_igralca, kopija.preberi_člen(self.koord_igralca) + "+")  # "+" bo označeval igralca
@@ -445,10 +488,20 @@ class UrejevalnikNivojev:  # level editor
         pass
 
     def dodaj_element(self, element, polje):  # element je nek niz, kot smo imeli pri nivojih. Dva elementa ne moreta biti na istem mestu na začetku.
-        pass
-    # element se izbriše tako, da dodaš na tisto mesto prazen string
+        self.trenutni_nivo.dodaj_element(polje, element)
 
-    
+    def dodaj_škatlo(self, velikost, polje):
+        self.trenutni_nivo.dodaj_škatlo(velikost, polje)
+
+    def dodaj_barvno_škatlo(self, velikost, polje):
+        if not je_škatla(element):
+            raise ValueError("To sploh ni škatla!")
+        else:
+            self.trenutni_nivo.dodaj_barvno_škatlo(velikost, polje)
+    # element se izbriše tako, da dodaš na tisto mesto prazen string
+    def prestavi_igralca(self, polje):
+        self.trenutni_nivo.prestavi_igralca(polje)
+
     def izbrisi_vse(self):  # resetira nivo
         self.trenutni_nivo = vrni_prazen_nivo(self.trenutni_nivo.matrika.širina, self.trenutni_nivo.matrika.višina)  # vzame kar iste dimenzije kot so bile pred izbrisom
     
