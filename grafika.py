@@ -2,8 +2,9 @@ from PIL import Image, ImageDraw
 import os
 # Inštalacija: v cmd napišemo python -m pip install Pillow
 
+from barve import bar, slovar_velikosti, št_velikosti
 
-št_velikosti = 2  # 2 je default, lahko je tudi več
+
 št_pikslov = št_velikosti * 4 + 6  # to je sam na kok delov moramo razdelit sliko. Slika bo torej toliko na kvadrat
 
 
@@ -20,13 +21,12 @@ draw = ImageDraw.Draw(out, mode="RGBA")  # mode od Image in od ImageDraw mora bi
 # črta:
 # draw.line((0, out.size[0], out.size[1], 20), fill=128)  # x1, y1, x2, y2
 
-
+# os.chdir("..") je za premikanje ene mape gor
 os.chdir("UVP")  # pojdi v mapo UVP
 os.chdir("Projektna-naloga")
 os.chdir("testne_slike")  # ustvarimo novo mapo z imenom testne_slike, kamor se bodo slike shranjevale
+os.chdir(str(št_velikosti))  # šli bomo v mapo, namenjena za te velikosti
 
-
-barve = {(255, 0, 0): "rdeča", (0, 0, 255): "modra", (0, 0, 0): "črna"}
 
 smeri = {"s", "j", "v", "z"}
 
@@ -65,7 +65,7 @@ def izriši_sliko(velikost, smer, barva):
         koord2 = (2 + premik, št_pikslov - 1 - premik)
         izriši_pravokotnik(draw, koord1, koord2, barva)
 
-    ime = "škatla" + str(velikost) + smer + "_" + barve[barva]
+    ime = "skatla" + str(velikost) + smer + "_" + bar[barva] + str(št_velikosti)  # na koncu dodamo št_velikosti, saj škatla velikosti 1 pri skupnem številu velikosti 2 ne izgleda enako kot škatla velikosti 1 pri skupnem številu velikosti 3
     shrani(ime, out)
 
 
@@ -74,8 +74,11 @@ def izriši_sliko_v_vse_smeri(velikost, barva):
         izriši_sliko(velikost, smer, barva)
 
 
-slovar_velikosti = {"1": (255, 0, 0), "2": (0, 0, 255), "ostalo": (0, 0, 0)}  # ključi pomenijo barvo
+
 for ključ in slovar_velikosti:
+    if ključ.isdigit():  # le za številske vrednosti
+        if int(ključ) > št_velikosti:
+            continue  # velikost je prevelika
     barva = slovar_velikosti[ključ]
     if ključ == "ostalo":
         for i in range(1, št_velikosti + 1):
@@ -91,7 +94,7 @@ koord1 = ((št_pikslov / 2) - 1, (št_pikslov / 2) - 1)
 koord2 = ((št_pikslov / 2) + 1, (št_pikslov / 2) + 1)
         
 izriši_pravokotnik(draw, koord1, koord2, (0, 0, 0))
-ime = "igralec"
+ime = "igralec" + str(št_velikosti)
 shrani(ime, out)
 
 
@@ -105,7 +108,7 @@ koord1 = (1, 1)
 koord2 = (št_pikslov - 1, št_pikslov - 1)
         
 izriši_pravokotnik(draw, koord1, koord2, (0, 0, 0))
-ime = "skala"
+ime = "skala" + str(št_velikosti)
 shrani(ime, out)
 
 # format izgleda takole:

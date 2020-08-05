@@ -36,10 +36,10 @@ def poteza():
     testni_seznam[0].premik_v_smer(smer1)
     bottle.redirect('/dejanska_igra/')
 
-@bottle.get('/testne_slike/<picture>')  # tu je lahko / na konc al pa ne
-def serve_pictures(picture):
-    return bottle.static_file(picture, root="UVP\\Projektna-naloga\\testne_slike")
-# tukaj parametra ne moremo spremeniti v kaj drugega kot picture
+# nujno je treba dodati path, če imamo folder namesto slike
+@bottle.get('/Projektna-naloga/<mapa:path>')  # tu je lahko / na konc al pa ne
+def serve_pictures(mapa):
+    return bottle.static_file(mapa, root="UVP\\Projektna-naloga")
 
 
 bottle.run(reloader=True, debug=True)

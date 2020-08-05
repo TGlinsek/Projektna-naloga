@@ -1,3 +1,4 @@
+% from barve import bar, slovar_velikosti, št_velikosti
 <!DOCTYPE html>
 <html>
   <head>
@@ -53,10 +54,6 @@
     -->
     % # https://bottlepy.org/docs/dev/stpl.html za znake kot so % ipd
 
-
-    % # tole je vzeto iz grafika.py
-    % barve = {(255, 0, 0): "rdeča", (0, 0, 255): "modra", (0, 0, 0): "črna"}
-    % slovar_velikosti = {"1": (255, 0, 0), "2": (0, 0, 255), "ostalo": (0, 0, 0)}
     <!-- Narisat je treba game -->
     % sez = game.matrika_z_igralcem().seznam_seznamov
     <table style="border:1px solid black; border-collapse:collapse; width:100%">
@@ -68,8 +65,8 @@
               % counter = 0
               <div style="position: relative; top: 0; left: 0">
                 % for indeks, znak in enumerate(člen):
-                  % povezava = "škatla"
-                  % barva = "črna"
+                  % povezava = "skatla"
+                  % barva = "crna"
                   % ime_razreda = ""
                   % if znak == "-":
                     % continue
@@ -84,12 +81,13 @@
                     % counter += 1
                   % else:
                     % if znak.lower() != znak:  # če znak vlka črka
-                      % barva = barve[slovar_velikosti[str(indeks + 1)]]
+                      % barva = bar[slovar_velikosti[str(indeks + 1)]]
                     % end
                     % povezava += str(indeks + 1) + znak.lower() + "_" + barva
                     % ime_razreda = str(indeks + 1)
                     % counter += 1
                   % end
+                  % povezava += str(št_velikosti)  # dodamo "velikostni razred trenutnega levela"
 
                   <!-- <img src="/testne_slike/{{povezava}}.png" alt="Slike ni na tem naslovu!" class="razred_{{ime_razreda}}"></img>  -->
                   % if counter == 1:  # counter je vedno vsaj 1. Če je 1, je to spodnja slika, če več, je nespodnja
@@ -97,7 +95,9 @@
                   % elif counter >= 2:
                     % ime_razreda = "nespodnji"
                   % end
-                  <img src="/testne_slike/{{povezava}}.png" alt="Slike ni na tem naslovu!" class="{{ime_razreda}}"></img>
+                  % print(št_velikosti)
+                  % print(povezava)
+                  <img src="/Projektna-naloga/testne_slike/{{št_velikosti}}/{{povezava}}.png" alt="Slike ni na tem naslovu!" class="{{ime_razreda}}"></img>
           
                 % end
               </div>
