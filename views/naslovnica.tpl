@@ -20,6 +20,10 @@
   <form action="/ustvarjanje_igre/" method="post">
     <button type="submit">Nova igra</button>
   </form>
+
+  <form action="/vsi_leveli/" method="post">
+    <button type="submit">Seznam levelov</button>
+  </form>
 </body>
 
 </html>

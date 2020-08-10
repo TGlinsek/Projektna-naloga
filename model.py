@@ -3,7 +3,7 @@
 # https://www.mathsisfun.com/games/boxup-puzzle.html
 
 import itertools
-
+import json
 
 def vsi_elementi_seznama_so_isti(seznam):  # pomožna funkcija
     if len(seznam) == 0:
@@ -39,6 +39,9 @@ class Koordinate:
         if y < 0:
             y = 0
         self.y = y
+    
+    def vrni_nabor(self):
+        return (self.x, self.y)
 
     def spremeni_x_za(self, offset):
         self.nastavi_x(self.x + offset)
@@ -186,10 +189,11 @@ class Nivo:  # dejansko matrika, ki se spreminja
     # vsi členi seznama koord_barvnih_škatel bodo razredi Koordinate
     def __init__(self, seznam_seznamov, začetni_koord, seznam_naborov_barvnih_škatel):  # leveli bodo vedno taki (tudi v level editorju ne boš mogel narediti tako), da so škatle na začetku posebej (ni dveh skupaj)
         self.matrika = Matrika(seznam_seznamov)  # se spreminja
-        self.koord_igralca = Koordinate(začetni_koord)  # nabor (x, y) (nikoli ne bomo spreminjali vsako koordinato posebej, ampak vsakič obe naenkrat. Torej lahko uporabimo nabor)
-        seznam_objektov_barvnih_škatel = []
-        for nabor in seznam_naborov_barvnih_škatel:
-            seznam_objektov_barvnih_škatel.append(Koordinate(nabor))  # nabore koordinat bomo spreminjali v objekt Koordinate
+        self.koord_igralca = Koordinate(tuple(začetni_koord))  # nabor (x, y) (nikoli ne bomo spreminjali vsako koordinato posebej, ampak vsakič obe naenkrat. Torej lahko uporabimo nabor)
+        # to je potrebno, saj nočemo pred vsakim naborom pisati besedo "Koordinate"
+        množica_objektov_barvnih_škatel = []
+        for nabor in seznam_naborov_barvnih_škatel:  # to bi sicer morala biti množica, ampak json ne podpira množic
+            množica_objektov_barvnih_škatel.append(Koordinate(tuple(nabor)))  # nabore koordinat bomo spreminjali v objekt Koordinate
 
         # koord_barvnih_škatel  # seznam naborov (po defaultu dveh, lahko več, ne more pa bit manj kot dve)
 
@@ -211,7 +215,7 @@ class Nivo:  # dejansko matrika, ki se spreminja
         To bo naredila funkcija razberi().
         """
         slovar = {}
-        for par_koordinat in seznam_objektov_barvnih_škatel:  # vrstni red v seznamu "koord_barvnih_škatel" ni pomemben. V vsakem primeru pride (oz. bi moral priti) isti rezultat
+        for par_koordinat in množica_objektov_barvnih_škatel:  # vrstni red v seznamu "koord_barvnih_škatel" ni pomemben. V vsakem primeru pride (oz. bi moral priti) isti rezultat
             člen_matrike = self.matrika.preberi_člen(par_koordinat)
             smer, velikost = razberi(člen_matrike)
             if smer not in ["s", "j", "v", "z"]:
@@ -256,9 +260,21 @@ class Nivo:  # dejansko matrika, ki se spreminja
         
         zadnji znak v nizu nikoli ne more biti pomišljaj ("-")
         """
-    
+
+    # za barvne škatle
+    def pridobi_seznam_naborov(self):  # to je zato, da ne shranjujemo nepotrebnih informacij o smereh in velikosti barvnih škatel. Zanima nas le lokacija
+        sez = []
+        for ključ in self.slovar_barvnih_škatel:
+            objekt_koord = self.slovar_barvnih_škatel[ključ][0]
+            sez.append(objekt_koord.vrni_nabor())
+        return sez
+    # to se bo klicalo, ko bomo določeno stanje v levelu (ali ko igramo, ali pa ko urejamo) vpisali v JSON
+
+    def vrni_parametre(self):  # vrne parametre za izdelavo levela (to je nabor, v katerem je seznam seznamov, začetne koordinate, in koordinate barvnih škatel)
+        return (self.matrika.seznam_seznamov, self.koord_igralca.vrni_nabor(), self.pridobi_seznam_naborov())
+
     def dodaj_element(self, koordinate, člen):  # za level editor. Default smer je sever. Kasneje lahko še rotiramo
-        if self.matrika_z_igralcem.preberi_člen(koordinate) == "":  # še za igralca
+        if self.matrika_z_igralcem.preberi_člen(koordinate) == "":  # še za igralca (zato matrika z igralcem)
             self.matrika.zamenjaj_člen(koordinate, člen)
         else:
             raise ValueError("Polje je že zasedeno!")
@@ -447,11 +463,23 @@ class Nivo:  # dejansko matrika, ki se spreminja
 
 class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level. Torej bomo imeli slovar
     
-    def __init__(self, datoteka_z_nivoji):
+    def __init__(self, datoteka_z_nivoji="UVP\\Projektna-naloga\\nivoji.json"):
         self.datoteka_z_nivoji = datoteka_z_nivoji
-        # oblika: {"0": matrika, "1": ..., "custom_level": ...}
+        # oblika: {"1": (seznam_seznamov, začetni_koord, seznam_naborov_barvnih_škatel), "2": ..., "custom_level": ...}
+        # ključ in ime bosta vedno enaka (če bomo sploh imel ime) - ne ne bomo
+        with open(self.datoteka_z_nivoji, "r", encoding="utf-8") as f:
+            self.slovar_nivojev = json.load(f)
 
-        self.število_nivojev = max([int(ključ) for ključ in self.datoteka_z_nivoji.keys() if ključ.isdigit()])  # vsi ključi bodo stringi
+        # to je samo število oštevilčenih nivojev (štetje se začne z 1)
+        self.število_nivojev = max([int(ključ) for ključ in self.slovar_nivojev.keys() if ključ.isdigit()])  # vsi ključi bodo stringi
+
+    def preberi_iz_datoteke(self):
+        with open(self.datoteka_z_nivoji, "r", encoding="utf-8") as f:
+            self.slovar_nivojev = json.load(f)
+
+    def naloži_v_datoteko(self):
+        with open(self.datoteka_z_nivoji, "w", encoding="utf-8") as f:
+            json.dump(self.slovar_nivojev, f, indent=4)
 
     def naslednji_nivo(self, id_trenutnega_nivoja):
         if type(id_trenutnega_nivoja) is int:
@@ -461,6 +489,40 @@ class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level.
                 return None  # to je bil zadnji level
         else:
             return None  # custom leveli niso razporejeni po vrsti
+        
+    def vrni_nivo(self, id_trenutnega_nivoja):
+        return Nivo(*(self.slovar_nivojev[id_trenutnega_nivoja]))
+
+class VseIgre:
+    # pod userid je shranjen 
+    def __init__(self):
+        # Ta objekt se ne bo shranjeval! Razlog: 1. tu so shranjeni podatki, ki se skozi igro pogosto spreminjajo. So tudi taki, ki nas po koncu igre ne zanimajo. Zato se ne shranjujejo. 2. Če bi shranjevali, bi morali shraniti samo pomembne podatke, kar pomeni, da bi morali iz objekta Nivo spraviti le ta pomembne inforamcije, hkrati pa klonirati self.stanja tako da ne vsebuje nobenih objektov. V glavnem, povsem nepotrebno.
+        self.stanja = {}  # {1: ({"1", "2", "4"}, Nivo()), 2: ...}
+
+        # {iduporabnika: (imelevela, stanjelevela (oz. kar level sam), trenutniobjekt), ...}
+        # stanje levela je istega formata kot v VsiNivoji
+        # trenutniobjekt je označen objekt v urejevalniku (recimo črna škatla, te pa te velikosti). Če nismo v urejevalniku, je None
+    
+    def vrni_level(self, id_igralca):
+        return self.stanja[id_igralca][1]
+
+    def vrni_ime(self, id_igralca):
+        return self.stanja[id_igralca][0]
+
+    def vrni_objekt(self, id_igralca):
+        return self.stanja[id_igralca][2]
+    
+    def spremeni_ime(self, id_igralca, novo_ime):
+        _, lvl, obj = self.stanja[id_igralca]
+        self.stanja[id_igralca] = (novo_ime, lvl, obj)
+    
+    def spremeni_objekt(self, id_igralca, nov_objekt):
+        ime, lvl, _ = self.stanja[id_igralca]
+        self.stanja[id_igralca] = (ime, lvl, nov_objekt)
+
+    # to je basically to od metod
+    
+    # ne bo metod kot so "zamenjaj položaj igralca v levelu" itd. To se drugje uredi
 
 
 def vrni_prazen_nivo(širina, višina):  # imel bo igralca v levem zgornjem kotu, potem pa dve barvni škatli: manjšo desno zgoraj, večjo desno spodaj
@@ -473,19 +535,53 @@ def vrni_prazen_nivo(širina, višina):  # imel bo igralca v levem zgornjem kotu
     seznam_seznamov[višina - 1][širina - 1] = "-s"
     return Nivo(seznam_seznamov, Koordinate(0, 0), [Koordinate(širina - 1, 0), Koordinate(širina - 1, višina - 1)])
 
-            
+
+class Uporabniki:
+
+    def __init__(self, datoteka_s_stanjem='UVP\\Projektna-naloga\\uporabniki.json'):
+        self.datoteka_s_stanjem = datoteka_s_stanjem
+        self.idji = None
+        # preberi iz datoteke: self.idji = {}  # slovar
+    
+    def preberi_iz_datoteke(self):  # ko se naloži seznam ven, ga moramo prevesti v množico, če je v originalu to bila množica
+        with open(self.datoteka_s_stanjem, "r", encoding="utf-8") as f:
+            self.idji = json.load(f)  # {1: ({"1", "2", "4"}, Nivo()), 2: ...}
+
+    def naloži_v_datoteko(self):
+        with open(self.datoteka_s_stanjem, "w", encoding="utf-8") as f:
+            json.dump(self.idji, f, indent=4)  # množice avtomatsko spremeni v sezname
+
+    def prost_id_igre(self):
+        return str(max([int(niz) for niz in self.idji.keys()], default=-1) + 1)  # json pretvori vse celoštevilske ključe slovarjev v nize
+    
+    def izigral_level(self, id_uporabnika, ime_nivoja):
+        nivoji, urejevalnik = self.idji[id_uporabnika]
+        nivoji.append(ime_nivoja)
+        self.idji[id_uporabnika] = (nivoji, urejevalnik)
+        self.naloži_v_datoteko()
+    
+    def uredil_nivo(self, id_uporabnika, nivo):  # nivo je pač spremenjeno stanje nivoja, ki se ga obdeluje. Ime je tukaj shranjeno zraven
+        nivoji, _ = self.idji[id_uporabnika]
+        self.idji[id_uporabnika] = (nivoji, nivo)
+        self.naloži_v_datoteko()
+    
+    def dodaj_uporabnika(self):
+        id_uporabnika = self.prost_id_igre()
+        self.idji[id_uporabnika] = ([], None)  # None je, če ni nobenega levela shranjenega v urejevalniku - drugače pa celotno stanje levela, vključno z imenom
+        self.naloži_v_datoteko()
+
+        return id_uporabnika
+
+
 class UrejevalnikNivojev:  # level editor
 
     # None v primeru da začnemo nov nivo od začetka
     def __init__(self, trenutni_nivo=None, ime=None, širina=None, višina=None):  # klicalo se bo tako: UrejevalnikNivojev(VsiNivoji[ključ], ključ)
         if trenutni_nivo is None:
             self.trenutni_nivo = vrni_prazen_nivo(širina, višina)
+            self.ime = "Nepoimenovan nivo"
         else:
             self.trenutni_nivo = trenutni_nivo  # Level
-            self.ime = ime
-    
-    def izrisi(self):
-        pass
 
     def dodaj_element(self, element, polje):  # element je nek niz, kot smo imeli pri nivojih. Dva elementa ne moreta biti na istem mestu na začetku.
         self.trenutni_nivo.dodaj_element(polje, element)
@@ -495,16 +591,17 @@ class UrejevalnikNivojev:  # level editor
 
     def dodaj_barvno_škatlo(self, velikost, polje):
         if not je_škatla(element):
-            raise ValueError("To sploh ni škatla!")
+            raise ValueError("To sploh ni škatla!")  # to se itak naj ne bi nikoli zgodilo
         else:
             self.trenutni_nivo.dodaj_barvno_škatlo(velikost, polje)
+    
     # element se izbriše tako, da dodaš na tisto mesto prazen string
+
     def prestavi_igralca(self, polje):
         self.trenutni_nivo.prestavi_igralca(polje)
 
     def izbrisi_vse(self):  # resetira nivo
         self.trenutni_nivo = vrni_prazen_nivo(self.trenutni_nivo.matrika.širina, self.trenutni_nivo.matrika.višina)  # vzame kar iste dimenzije kot so bile pred izbrisom
-    
     
     def dodaj_level(self):
         # dodamo nov level v seznam VsiNivoji, pod novim imenom

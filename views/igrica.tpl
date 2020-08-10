@@ -95,8 +95,6 @@
                   % elif counter >= 2:
                     % ime_razreda = "nespodnji"
                   % end
-                  % print(št_velikosti)
-                  % print(povezava)
                   <img src="/Projektna-naloga/testne_slike/{{št_velikosti}}/{{povezava}}.png" alt="Slike ni na tem naslovu!" class="{{ime_razreda}}"></img>
           
                 % end
@@ -126,14 +124,18 @@
       Pikice izgleda da ne morejo škoditi: to samo doda starševsko mapo, če pač slika ne bi bila v naši mapi (trenutno smo se mi zdi v mapi slike). Slika bi lahko bila kje drugje kot v mapi slike, zato pač moramo najprej iti v kakšno bolj zgornjo mapo.
       To, ali na koncu dodamo še eno poševnico, ne spremeni ničesar. Oba zapisa sta v redu.
     -->
-    % # lahko bi napisali tudi {{game}}, ampak potem izriše matriko v eno samo vrstico
 
     % if game.preveri_ali_na_cilju():
 
     <h1>ZMAGA!</h1>
-    <form action="/ustvarjanje_igre/" method="post">
-      <button type="submit">Nova igra</button>
-    </form>
+      % if ime.isdigit():
+        % if int(ime) < max_stevilo:
+          <form action="/Level_n/{{int(ime) + 1}}/" method="post">
+            <button type="submit">Naslednji nivo</button>
+          </form>
+        % end
+        % # za custom nivoji ni naslednjega nivoja
+      % end
 
     % else:
 
@@ -143,6 +145,10 @@
     </form>
 
     % end
+
+    <form action="/seznam_levelov/" method="get">
+      <button type="submit">Seznam levelov</button>
+    </form>
 
   </body>
 
