@@ -4,6 +4,7 @@
 
 import itertools
 import json
+from copy import deepcopy
 
 def vsi_elementi_seznama_so_isti(seznam):  # pomožna funkcija
     if len(seznam) == 0:
@@ -506,7 +507,8 @@ class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level.
             return None  # custom leveli niso razporejeni po vrsti
         
     def vrni_nivo(self, id_trenutnega_nivoja):
-        return Nivo(*(self.slovar_nivojev[id_trenutnega_nivoja]))
+        print(self.slovar_nivojev[id_trenutnega_nivoja])
+        return Nivo(*(deepcopy(self.slovar_nivojev[id_trenutnega_nivoja])))  # če ne kopiramo oz. naredimo samo .copy, bodo nekateri pointerji še kar kazali na isto mesto v pomnilniku. Takrat bi se z igranjem nivoja hkrati spreminjal tudi self.slovar_nivojev, kar pa nočemo. Nivoji se ne smejo spreminjati v objektih tipa VsiNivoji.
     
     def dodaj_nivo(self, ime_nivoja, nivo):
         if ime_nivoja in self.slovar_nivojev:
@@ -576,7 +578,7 @@ class Uporabniki:
             self.idji[ključ] = (placeholder_slovar[ključ][0], placeholder_slovar[ključ][1], nivo)
 
     def naloži_v_datoteko(self):
-        placeholder_slovar = self.idji.copy()
+        placeholder_slovar = deepcopy(self.idji)  # nočemo, da se s spreminjanjem slovarja placeholder_slovar spreminja tudi self.idji
         for ključ in placeholder_slovar:
             nivo = self.vrni_nivo(ključ)
             if nivo is None:
@@ -588,7 +590,6 @@ class Uporabniki:
             json.dump(placeholder_slovar, f, indent=4)
 
     def prost_id_igre(self):
-        print(self.idji)
         return str(max([int(niz) for niz in self.idji.keys()], default=-1) + 1)  # json pretvori vse celoštevilske ključe slovarjev v nize
     
     def zigral_level(self, id_uporabnika, ime_nivoja):
@@ -633,34 +634,11 @@ class UrejevalnikNivojev:  # level editor
         else:
             self.trenutni_nivo = trenutni_nivo  # Level
 
-    def dodaj_element(self, element, polje):  # element je nek niz, kot smo imeli pri nivojih. Dva elementa ne moreta biti na istem mestu na začetku.
-        self.trenutni_nivo.dodaj_element(polje, element)
-
-    def dodaj_škatlo(self, velikost, polje):
-        self.trenutni_nivo.dodaj_škatlo(velikost, polje)
-
-    def dodaj_barvno_škatlo(self, velikost, polje):
-        if not je_škatla(element):
-            raise ValueError("To sploh ni škatla!")  # to se itak naj ne bi nikoli zgodilo
-        else:
-            self.trenutni_nivo.dodaj_barvno_škatlo(velikost, polje)
-    
-    # element se izbriše tako, da dodaš na tisto mesto prazen string
-
-    def prestavi_igralca(self, polje):
-        self.trenutni_nivo.prestavi_igralca(polje)
-
     def izbrisi_vse(self):  # resetira nivo
         self.trenutni_nivo = vrni_prazen_nivo(self.trenutni_nivo.matrika.širina, self.trenutni_nivo.matrika.višina)  # vzame kar iste dimenzije kot so bile pred izbrisom
     
-    def dodaj_level(self):
-        # dodamo nov level v seznam VsiNivoji, pod novim imenom
-        pass
 
     # ko submitaš level, ni poti nazaj in je vsem viden.
-
-    def rotiraj(self, koordinate):
-        pass
 
 
 

@@ -55,7 +55,10 @@ def poteza():
     # tu dodaj zigran level v seznam
     smer1 = bottle.request.forms.getunicode('smer')
     smer1 = smer1.lower()
-    vse_igre.vrni_nivo(id_uporabnika).premik_v_smer(smer1)
+    nivo = vse_igre.vrni_nivo(id_uporabnika) 
+    nivo.premik_v_smer(smer1)
+    if nivo.preveri_ali_na_cilju():
+        uporabniki.zigral_level(id_uporabnika, vse_igre.vrni_ime(id_uporabnika))
     bottle.redirect('/dejanska_igra/')
 
 # Seznam levelov
