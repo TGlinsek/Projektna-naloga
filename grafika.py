@@ -111,6 +111,15 @@ izriši_pravokotnik(draw, koord1, koord2, (0, 0, 0))
 ime = "skala" + str(št_velikosti)
 shrani(ime, out)
 
+"""
+# prazna slika
+out = Image.new("RGBA", (100, 100), (255, 0, 0, 0))
+
+ime = "praznina" + str(št_velikosti)
+shrani(ime, out)
+"""
+
+
 # format izgleda takole:
 # barva = (255, 0, 0)
 # draw.rectangle(((25, 25), (50, 75)), fill=barva)
@@ -118,3 +127,23 @@ shrani(ime, out)
 
 # za prikaz slike bi dali:
 # out.show()
+
+
+"""
+# Zrcaljenje slike
+
+# import required image module
+from PIL import Image
+
+# Open an already existing image
+imageObject = Image.open("neka_slika.jpg")
+
+# Do a flip of left and right
+hori_flippedImage = imageObject.transpose(Image.FLIP_LEFT_RIGHT)
+
+# Show the original image
+imageObject.show()
+
+# Show the horizontal flipped image
+hori_flippedImage.show()
+"""

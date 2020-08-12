@@ -61,8 +61,13 @@
         <tr>
           % for člen in vrstica:
             <td style="height:120px">
-              % # {{člen if člen != "" else "-"}}
               % counter = 0
+              % if člen == "":
+                <div style="position: relative; top: 0; left: 0">
+                  <img src="/Projektna-naloga/testne_slike/praznina.png" alt="Slike ni na tem naslovu!" class="spodnji"/>
+                </div>
+                % continue
+              % end
               <div style="position: relative; top: 0; left: 0">
                 % for indeks, znak in enumerate(člen):
                   % povezava = "skatla"
@@ -73,20 +78,18 @@
                   % elif znak == "+":
                     % povezava = "igralec"
                     % ime_razreda = "igralec"
-                    % counter += 1
                   % elif znak == "!":
                     % povezava = "skala"
                     % ime_razreda = "skala"
                     % # izriši škatlo
-                    % counter += 1
                   % else:
                     % if znak.lower() != znak:  # če znak vlka črka
                       % barva = bar[slovar_velikosti[str(indeks + 1)]]
                     % end
                     % povezava += str(indeks + 1) + znak.lower() + "_" + barva
                     % ime_razreda = str(indeks + 1)
-                    % counter += 1
                   % end
+                  % counter += 1
                   % povezava += str(št_velikosti)  # dodamo "velikostni razred trenutnega levela"
 
                   <!-- <img src="/testne_slike/{{povezava}}.png" alt="Slike ni na tem naslovu!" class="razred_{{ime_razreda}}"></img>  -->
