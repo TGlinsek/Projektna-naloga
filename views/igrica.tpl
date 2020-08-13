@@ -1,4 +1,4 @@
-% from barve import bar, slovar_velikosti, št_velikosti
+% from barve import bar, slovar_velikosti
 <!DOCTYPE html>
 <html>
   <head>
@@ -53,7 +53,7 @@
     </table>
     -->
     % # https://bottlepy.org/docs/dev/stpl.html za znake kot so % ipd
-
+    % št_velikosti = game.velikostna_stopnja
     <!-- Narisat je treba game -->
     % sez = game.matrika_z_igralcem().seznam_seznamov
     <table style="border:1px solid black; border-collapse:collapse; width:100%">
@@ -136,6 +136,8 @@
           <form action="/Level_n/{{int(ime) + 1}}/" method="post">
             <button type="submit">Naslednji nivo</button>
           </form>
+        % else:
+          To je bil zadnji uradni nivo. Lahko pa poskusiš katerega izmed tistih, ki so jih oblikovali uporabniki.
         % end
         % # za custom nivoji ni naslednjega nivoja
       % end

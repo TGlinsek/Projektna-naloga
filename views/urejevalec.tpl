@@ -1,4 +1,4 @@
-% from barve import bar, slovar_velikosti, št_velikosti
+% from barve import bar, slovar_velikosti
 <!DOCTYPE html>
 <html>
   <head>
@@ -58,7 +58,7 @@
     </table>
     -->
     % # https://bottlepy.org/docs/dev/stpl.html za znake kot so % ipd
-
+    % št_velikosti = game.velikostna_stopnja
     <!-- Narisat je treba game -->
     % sez = game.matrika_z_igralcem().seznam_seznamov
     <table style="border:1px solid black; border-collapse:collapse; width:100%">
@@ -129,6 +129,9 @@
     % for i in range((len(seznam) - 1) // dolžina_vrste + 1):
       % nov_seznam.append(seznam[i * dolžina_vrste:(i + 1) * dolžina_vrste])
     % end
+    % for i in range((-len(seznam)) % dolžina_vrste):
+      % nov_seznam[-1].append(None)
+    % end
     <table style="border:1px solid black; border-collapse:collapse; width:100%">
       % for sez in nov_seznam:
       <tr>
@@ -137,6 +140,9 @@
           % razred = "spodnji"
           % if niz == izbran_objekt:
             % razred = "poudarjen"
+          % end
+          % if niz is None:  # to je zato, da izpolnemo tabelo do konca
+            % continue
           % end
           % if niz == "-":
             <div style="position: relative; top: 0; left: 0">
@@ -200,6 +206,31 @@
       <button type="submit">Nazaj na seznam nivojev</button>
     </form>
 
+    <form action="/urejevalec/" method="post">
+      <label>Velikostna stopnja:</label>
+      <select name= "stopnja">
+        % for i in range(2, 4):
+          <option value="{{i}}">{{i}}</option>
+        % end
+      </select>
+      <button type="submit">Zamenjaj število velikostnih stopenj v nivoju</button>
+    </form>
+    % # if len(game.slovar_barvnih_škatel) < 2: error
+    % if napaka is not None:
+      % if napaka[0] == "ime":
+        Ime {{napaka[1]}} ni ustrezno!
+      % elif napaka[0] == "škatla":
+        Ne moreta biti manj kot dve barvni škatli!
+      % elif napaka[0] == "nivo":
+        Nivo z imenom {{napaka[1]}} je že v bazi nivojev!
+      % elif napaka[0] == "igralec":
+        Ne moreš izbrisati igralca!
+      % elif napaka[0] == "polje":
+        To polje je že zasedeno
+      % elif napaka[0] == "rotacija":
+        Ne moreš rotirati objektov, ki niso škatle!  
+      % end
+    % end
   </body>
 
 </html>

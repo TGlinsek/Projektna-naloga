@@ -192,6 +192,13 @@ class Nivo:  # dejansko matrika, ki se spreminja
         self.matrika = Matrika(seznam_seznamov)  # se spreminja
         self.koord_igralca = Koordinate(tuple(začetni_koord))  # nabor (x, y) (nikoli ne bomo spreminjali vsako koordinato posebej, ampak vsakič obe naenkrat. Torej lahko uporabimo nabor)
         # to je potrebno, saj nočemo pred vsakim naborom pisati besedo "Koordinate"
+        """
+        maksimalna_vrstica = 0
+        for vrsta in seznam_seznamov:
+            maksimalna_vrstica = max(max(vrsta, key=len), maksimalna_vrstica)
+        """
+        self.velikostna_stopnja = len(max(max(seznam_seznamov, key=lambda v: len(max(v, key=len))), key=len))  # vrne največjo velikost, ki se pojavi v nivoju
+
         množica_objektov_barvnih_škatel = []
         for nabor in seznam_naborov_barvnih_škatel:  # to bi sicer morala biti množica, ampak json ne podpira množic
             množica_objektov_barvnih_škatel.append(Koordinate(tuple(nabor)))  # nabore koordinat bomo spreminjali v objekt Koordinate
@@ -278,31 +285,40 @@ class Nivo:  # dejansko matrika, ki se spreminja
         if self.matrika_z_igralcem().preberi_člen(koordinate) == "":  # še za igralca (zato matrika z igralcem)
             self.matrika.zamenjaj_člen(koordinate, člen)
         else:
-            raise ValueError("Polje je že zasedeno!")
+            return True
+            # raise ValueError("Polje je že zasedeno!")
 
     def dodaj_škatlo(self, velikost, koordinate):
-        self.dodaj_element(koordinate, škatla(velikost, "s"))
+        return self.dodaj_element(koordinate, škatla(velikost, "s"))  # return je zato da sporočimo morebitno napako
     
 
     def dodaj_barvno_škatlo(self, velikost, koordinate):
-        self.dodaj_škatlo(velikost, koordinate)
-        if str(velikost) in self.slovar_barvnih_škatel.keys():
-            raise ValueError("Velikost barvne škatle je že v slovarju!")
-        else:
-            self.slovar_barvnih_škatel[str(velikost)] = (koordinate, "s")
+        napaka = self.dodaj_škatlo(velikost, koordinate)
+        if napaka:  # polje zasedeno
+            return True
+        if str(velikost) in self.slovar_barvnih_škatel.keys():  # če barvno škatlo samo prestavljamo, ne pa dodajamo na novo
+            stare_koord = self.slovar_barvnih_škatel[str(velikost)][0]
+
+            # tu ne moremo dati odstrani_element, saj ga to zmede (misli, da bomo brisali barvno škatlo)
+            self.matrika.zamenjaj_člen(stare_koord, "")  # vzemi koordinate in zbriši škatlo na prejšnjem mestu (če te vrstice ni, ostane navadna škatla)
+        self.slovar_barvnih_škatel[str(velikost)] = (koordinate, "s")
     
     def odstrani_element(self, koordinate):
         if self.koord_igralca == koordinate:
-            raise ValueError("Igralec mora vedno biti prisoten!")
+            return 2
+            # raise ValueError("Igralec mora vedno biti prisoten!")
         člen = self.matrika_z_igralcem().preberi_člen(koordinate)
         if člen == "":  # ker potem člen[-1] ne deluje
             return
         if člen[-1].lower() != člen[-1]:  # barvna škatla
             velikost = len(člen)
-            self.odstrani_barvno_škatlo(velikost)
+            if len(self.slovar_barvnih_škatel) == 2:  # 2 je najmanj
+                return True
+            else:
+                self.odstrani_barvno_škatlo(velikost)
         self.matrika.zamenjaj_člen(koordinate, "")
 
-    def odstrani_barvno_škatlo(self, velikost):
+    def odstrani_barvno_škatlo(self, velikost):  # če odstranjuješ barvno škatlo, raje kliči odstrani_element
         # to povzroči rekurzijo:
         # self.odstrani_element(self.slovar_barvnih_škatel[str(velikost)][0])  # odstrani element na teh koordinatah
         # self.slovar_barvnih_škatel[str(velikost)] = None  # upam da bo to dovolj za "izbris" škatle
@@ -315,7 +331,8 @@ class Nivo:  # dejansko matrika, ki se spreminja
             s = rotirane_smeri[niz[-1]]
             self.matrika.zamenjaj_člen(koordinate, škatla(len(niz), s if smer == "+" else nasprotne_smeri[s]))
         else:
-            raise ValueError("To ni škatla! Le škatle se da rotirati.")
+            return True
+            # raise ValueError("To ni škatla! Le škatle se da rotirati.")
 
     def prestavi_igralca(self, koordinate):
         if self.matrika_z_igralcem().preberi_člen(koordinate) == "":
@@ -324,7 +341,8 @@ class Nivo:  # dejansko matrika, ki se spreminja
             else:
                 raise ValueError("Koordinate niso ustrezne! Koordinate " + koordinate + " ne gredo v matriko širine " + str(self.matrika.širina) + " in višine " + str(self.matrika.višina) + ".")
         else:
-            raise ValueError("Koordinate so že zasedene!")
+            return True
+            # raise ValueError("Koordinate so že zasedene!")  # to lahk damo isto napako kot za polje zasedeno
 
     # tole je namenjeno le za prikaz igralcu:
     def matrika_z_igralcem(self):  # in tudi s poudarjenimi barvnimi škatlami
@@ -505,14 +523,23 @@ class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level.
                 return None  # to je bil zadnji level
         else:
             return None  # custom leveli niso razporejeni po vrsti
-        
+    
+    def vrni_prazno_ime(self):
+        default_ime = "Nepoimenovan nivo"
+        seznam = [ključ[17:] for ključ in self.slovar_nivojev.keys() if ključ[:17] == default_ime]
+        if len(seznam) == 0:
+            return default_ime
+        else:
+            število = max([int(niz) for niz in seznam + ["0"] if niz.isdigit()]) + 1  # torej if niz != ""
+            return default_ime + " " + str(število)
+
     def vrni_nivo(self, id_trenutnega_nivoja):
-        print(self.slovar_nivojev[id_trenutnega_nivoja])
+        # print(self.slovar_nivojev[id_trenutnega_nivoja])
         return Nivo(*(deepcopy(self.slovar_nivojev[id_trenutnega_nivoja])))  # če ne kopiramo oz. naredimo samo .copy, bodo nekateri pointerji še kar kazali na isto mesto v pomnilniku. Takrat bi se z igranjem nivoja hkrati spreminjal tudi self.slovar_nivojev, kar pa nočemo. Nivoji se ne smejo spreminjati v objektih tipa VsiNivoji.
     
     def dodaj_nivo(self, ime_nivoja, nivo):
-        if ime_nivoja in self.slovar_nivojev:
-            raise ValueError("Nivo s tem imenom že obstaja!")
+        if ime_nivoja in self.slovar_nivojev.keys():
+            raise ValueError("Nivo s tem imenom že obstaja!")  # to se itak ne bi smelo zgoditi
         self.slovar_nivojev[ime_nivoja] = nivo.vrni_parametre()  # VsiNivoji ne vsebuje nivojev, le potrebne podatke za izdelavo le-teh
         self.naloži_v_datoteko()
 
@@ -535,13 +562,20 @@ class VseIgre:
     def vrni_objekt(self, id_igralca):
         return self.stanja[id_igralca][2]
     
+    def vrni_napako(self, id_igralca):
+        return self.stanja[id_igralca][3]
+
     def spremeni_ime(self, id_igralca, novo_ime):
-        _, lvl, obj = self.stanja[id_igralca]
-        self.stanja[id_igralca] = (novo_ime, lvl, obj)
+        _, lvl, obj, napaka = self.stanja[id_igralca]
+        self.stanja[id_igralca] = (novo_ime, lvl, obj, napaka)
     
     def spremeni_objekt(self, id_igralca, nov_objekt):
-        ime, lvl, _ = self.stanja[id_igralca]
-        self.stanja[id_igralca] = (ime, lvl, nov_objekt)
+        ime, lvl, _, napaka = self.stanja[id_igralca]
+        self.stanja[id_igralca] = (ime, lvl, nov_objekt, napaka)
+    
+    def spremeni_napako(self, id_igralca, napaka):
+        ime, lvl, obj, _ = self.stanja[id_igralca]
+        self.stanja[id_igralca] = (ime, lvl, obj, napaka)
 
     # to je basically to od metod
     
@@ -556,7 +590,7 @@ def vrni_prazen_nivo(širina, višina):  # imel bo igralca v levem zgornjem kotu
             seznam_seznamov[-1].append("")
     seznam_seznamov[0][širina - 1] = "s"
     seznam_seznamov[višina - 1][širina - 1] = "-s"
-    return Nivo(seznam_seznamov, Koordinate(0, 0), [Koordinate(širina - 1, 0), Koordinate(širina - 1, višina - 1)])
+    return Nivo(seznam_seznamov, (0, 0), [(širina - 1, 0), (širina - 1, višina - 1)])
 
 
 class Uporabniki:

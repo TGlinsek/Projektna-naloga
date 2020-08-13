@@ -55,7 +55,7 @@ def poteza():
     # tu dodaj zigran level v seznam
     smer1 = bottle.request.forms.getunicode('smer')
     smer1 = smer1.lower()
-    nivo = vse_igre.vrni_nivo(id_uporabnika) 
+    nivo = vse_igre.vrni_nivo(id_uporabnika)
     nivo.premik_v_smer(smer1)
     if nivo.preveri_ali_na_cilju():
         uporabniki.zigral_level(id_uporabnika, vse_igre.vrni_ime(id_uporabnika))
@@ -65,18 +65,23 @@ def poteza():
 @bottle.post('/shrani_nivo/')
 def shranjevanje_nivoja():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
+    vse_igre.spremeni_napako(id_uporabnika, None)  # izbrišemo sporočilo za napako
 
     ime = uporabniki.vrni_ime(id_uporabnika)
     nivo = uporabniki.vrni_nivo(id_uporabnika)
 
-    vsi_nivoji.dodaj_nivo(ime, nivo)
+    napaka = vsi_nivoji.dodaj_nivo(ime, nivo)
+    if napaka:
+        vse_igre.spremeni_napako(id_uporabnika, ("nivo", napaka))  # ime je zasedeno
     bottle.redirect('/seznam_levelov/')
 
 @bottle.get('/seznam_levelov/')
 def seznam():
     uporabnikov_id = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")  # pridobi id od uporabnika, da dobimo seznam nivojev, ki jih je že zigral
+    # vse_igre.spremeni_napako(uporabnikov_id, None)  # izbrišemo sporočilo za napako
+    vse_igre.stanja[uporabnikov_id] = (None, None, None, None)  # izbrišemo sporočilo za napako oz. ustvarimo vrednost za tega uporabnika v slovarju vse_igre.stanja
 
-    return bottle.template(pot("seznam.tpl"), vsi_nivoji=sorted(vsi_nivoji.slovar_nivojev.keys()), reseni_nivoji=uporabniki.vrni_rešene_nivoje(uporabnikov_id))
+    return bottle.template(pot("seznam.tpl"), vsi_nivoji=vsi_nivoji.slovar_nivojev.keys(), reseni_nivoji=uporabniki.vrni_rešene_nivoje(uporabnikov_id))
 
 @bottle.post('/Level_n/<ime_nivoja>/')
 def pridobivanje_levela(ime_nivoja):
@@ -85,7 +90,7 @@ def pridobivanje_levela(ime_nivoja):
     # zdaj pa ustvarimo nivo iz podatka o imenu
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
     nivo = odpri_nivo(ime_nivoja)
-    vse_igre.stanja[id_uporabnika] = (ime_nivoja, nivo, None)
+    vse_igre.stanja[id_uporabnika] = (ime_nivoja, nivo, None, None)
     # tut tk bi lah, sam bomo rajš šparal s piškotki:
     # bottle.response.set_cookie('ime_nivoja', ime_nivoja, secret="SKRIVNOST", expires=datum_ćez_7_dni)
     bottle.redirect('/dejanska_igra/')
@@ -103,7 +108,7 @@ def prid_levela(ime_nivoja):
     
     # vse_igre.spremeni_objekt(id_uporabnika, "+")  # to ne gre, saj še slovar pod tem ključem sploh ni nujno definiran
     # ne potrebujemo imena in levela od prej (vse_igre ne shranjuje informacij urejevalnika), zato je None
-    vse_igre.stanja[id_uporabnika] = (None, None, "+")
+    vse_igre.stanja[id_uporabnika] = (None, None, "+", None)
 
     uporabniki.spremenil_ime(id_uporabnika, ime_nivoja)
     uporabniki.uredil_nivo(id_uporabnika, nivo)
@@ -111,12 +116,27 @@ def prid_levela(ime_nivoja):
     # bottle.response.set_cookie('ime_nivoja', ime_nivoja, secret="SKRIVNOST", expires=datum_ćez_7_dni)
     bottle.redirect('/urejevalec/')
 
+@bottle.post('/Level_n_urejanje/')
+def prazen_nivo():
+    id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
+
+    širina = int(bottle.request.forms.getunicode('sirina'))
+    višina = int(bottle.request.forms.getunicode('visina'))
+    
+    nivo = model.vrni_prazen_nivo(širina, višina)
+    vse_igre.stanja[id_uporabnika] = (None, None, "+", None)
+
+    uporabniki.spremenil_ime(id_uporabnika, vsi_nivoji.vrni_prazno_ime())
+    uporabniki.uredil_nivo(id_uporabnika, nivo)
+
+    bottle.redirect('/urejevalec/')
+
 # Urejevalec
 @bottle.get('/urejevalec/')
 def urejanje():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
 
-    return bottle.template(pot("urejevalec.tpl"), game=uporabniki.vrni_nivo(id_uporabnika), ime=uporabniki.vrni_ime(id_uporabnika), izbran_objekt=vse_igre.vrni_objekt(id_uporabnika))
+    return bottle.template(pot("urejevalec.tpl"), game=uporabniki.vrni_nivo(id_uporabnika), ime=uporabniki.vrni_ime(id_uporabnika), izbran_objekt=vse_igre.vrni_objekt(id_uporabnika), napaka=vse_igre.vrni_napako(id_uporabnika))
 
 # v urejevalcu bo še gumb, kjer lahko shranimo svoj level. Tam bo program zahteval, da si izmislimo ime za ta level. Potem gre v seznam levelov
 
@@ -125,6 +145,7 @@ def urejanje():
 @bottle.post('/urejevalec/<niz>/')
 def poteza_urejanje(niz):
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
+    vse_igre.spremeni_napako(id_uporabnika, None)  # izbrišemo sporočilo za napako
     # niz je lahko oblike koordx-y, puscica1, puscica2, -, +, !, s, S, -s, -S itd.
     if niz[:5] == "koord":  # izbran objekt se ne spremeni, le kopira se ga in se ga vstavi v nivo
         zadnji_del = niz[5:]
@@ -138,22 +159,38 @@ def poteza_urejanje(niz):
         if objekt[:7] == "puscica":
             zadnji_znak = objekt[-1]
             znak = "+" if zadnji_znak == "1" else "-"  # zadnji_znak je lahko samo "1" ali pa "2"
-            nivo.rotiraj_škatlo(koord, znak)
+            napaka = nivo.rotiraj_škatlo(koord, znak)
+            if napaka:
+                vse_igre.spremeni_napako(id_uporabnika, ("rotacija", None))
         elif objekt == "+":
-            nivo.prestavi_igralca(koord)
+            napaka = nivo.prestavi_igralca(koord)
+            if napaka:
+                vse_igre.spremeni_napako(id_uporabnika, ("polje", None))
         elif objekt == "-":
-            nivo.odstrani_element(koord)
+            napaka = nivo.odstrani_element(koord)
+            if napaka:
+                if napaka == 2:
+                    vse_igre.spremeni_napako(id_uporabnika, ("igralec", None))
+                else:
+                    vse_igre.spremeni_napako(id_uporabnika, ("škatla", None))
+                    # škatli sta manj kot dve
         elif objekt == "!":
-            nivo.dodaj_element(koord, "!")
+            napaka = nivo.dodaj_element(koord, "!")
+            if napaka:
+                vse_igre.spremeni_napako(id_uporabnika, ("polje", None))
         else:  # škatla
             črka = objekt[-1]
             velikost = len(objekt)
             if črka.lower() == črka:  # če mala črka
-                nivo.dodaj_škatlo(velikost, koord)  # najmanjša velikost je 1
+                napaka = nivo.dodaj_škatlo(velikost, koord)  # najmanjša velikost je 1
+                if napaka:
+                    vse_igre.spremeni_napako(id_uporabnika, ("polje", None))
             elif črka.upper() == črka:  # če velika črka
-                nivo.dodaj_barvno_škatlo(velikost, koord)
+                napaka = nivo.dodaj_barvno_škatlo(velikost, koord)
+                if napaka:
+                    vse_igre.spremeni_napako(id_uporabnika, ("polje", None))
             else:
-                raise ValueError("Škatla ni ne velika ne mala!")
+                raise ValueError("Škatla ni ne velika ne mala!")  # to se naj ne bi zgodilo
     else:  # sprememba objekta:  vse_igre.spremeni_objekt(id_uporabnika, nov_objekt)
         vse_igre.spremeni_objekt(id_uporabnika, niz)  # tu se samo spremeni objekt ki je shranjen
         # objekt je lahko tudi puscica1 ali puscica2
@@ -167,14 +204,26 @@ def poteza_urejanje(niz):
 @bottle.post('/urejevalec/')
 def urejanje_imena():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
+    vse_igre.spremeni_napako(id_uporabnika, None)  # izbrišemo sporočilo za napako
     novo_ime = bottle.request.forms.getunicode('ime')  # podpora za šumnike
-    if novo_ime is None:
-        raise ValueError("Novo ime ima vrednost None!")  # to se naj ne bi nikoli zgodilo
-    ime = novo_ime.strip()
-    if ime == "":
-        raise ValueError("Neveljavno ime: " + novo_ime + "!")
+    stopnja = bottle.request.forms.getunicode('stopnja')
+
+    if stopnja in ["2", "3"]:
+        nivo = uporabniki.vrni_nivo(id_uporabnika)
+        nivo.velikostna_stopnja = int(stopnja)
     else:
-        uporabniki.spremenil_ime(id_uporabnika, ime)
+        if novo_ime is None:
+            raise ValueError("Novo ime ima vrednost None!")  # to se naj ne bi nikoli zgodilo
+        ime = novo_ime.strip()
+        if ime == "":
+            vse_igre.spremeni_napako(id_uporabnika, ("ime", novo_ime))
+            # raise ValueError("Neveljavno ime: " + novo_ime + "!")
+        else:
+            if ime in vsi_nivoji.slovar_nivojev.keys():
+                vse_igre.spremeni_napako(id_uporabnika, ("nivo", novo_ime))
+                # raise ValueError("Ime: " + novo_ime + " je že zasedeno!")
+            else:
+                uporabniki.spremenil_ime(id_uporabnika, ime)
 
     bottle.redirect('/urejevalec/')
 

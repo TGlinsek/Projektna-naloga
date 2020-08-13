@@ -15,7 +15,7 @@
     % for lvl in vsi_nivoji:
     <tr>
       <td>{{lvl}}</td>
-      <td>{{lvl in reseni_nivoji}}</td>
+      <td>{{"Da" if lvl in reseni_nivoji else "Ne"}}</td>
       <td>
         <form action="/Level_n/{{lvl}}/" method="post">
           <button type="submit">Igraj</button>
@@ -29,6 +29,9 @@
     </tr>
     % end
   </table>
+  <form action="/dobrodošel/" method="get">
+    <button type="submit">Glavni menu</button>
+  </form>
 </body>
 
 </html>
