@@ -8,7 +8,7 @@ veja = "UVP\\Projektna-naloga\\views"
 # testni_seznam = []  # ima shranjene trenutne levele (med igranjem)
 
 datum_čez_30_dni = datetime.datetime.now() + datetime.timedelta(days=30)
-datum_ćez_7_dni = datetime.datetime.now() + datetime.timedelta(days=7)
+# datum_ćez_7_dni = datetime.datetime.now() + datetime.timedelta(days=7)
 
 uporabniki = model.Uporabniki()  # ta objekt bo spremljal vse dosedaj zasedene id-je (to so samo integerji). Ima še metodo, ki priredi nov unikaten id
 uporabniki.preberi_iz_datoteke()
@@ -47,18 +47,27 @@ def naslovna_stran():
 def igranje():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
 
-    return bottle.template(pot("igrica.tpl"), game=vse_igre.vrni_nivo(id_uporabnika), ime=vse_igre.vrni_ime(id_uporabnika), max_stevilo=vsi_nivoji.število_nivojev)
+    return bottle.template(pot("igrica.tpl"), game=vse_igre.vrni_nivo(id_uporabnika), ime=vse_igre.vrni_ime(id_uporabnika), max_stevilo=vsi_nivoji.število_nivojev, napaka=vse_igre.vrni_napako(id_uporabnika))
 
 @bottle.post('/dejanska_igra/')
 def poteza():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
-    # tu dodaj zigran level v seznam
+    
+    vse_igre.spremeni_napako(id_uporabnika, None)  # resetiramo napako
+
     smer1 = bottle.request.forms.getunicode('smer')
     smer1 = smer1.lower()
-    nivo = vse_igre.vrni_nivo(id_uporabnika)
-    nivo.premik_v_smer(smer1)
-    if nivo.preveri_ali_na_cilju():
-        uporabniki.zigral_level(id_uporabnika, vse_igre.vrni_ime(id_uporabnika))
+    if smer1 not in model.znaki:
+        vse_igre.spremeni_napako(id_uporabnika, ("smer", smer1))
+    else:
+        nivo = vse_igre.vrni_nivo(id_uporabnika)
+        premik = nivo.premik_v_smer(smer1)  # ta vrstica premakne igralca, če ga lahko. Informacija o tem, ali se igralec premakne, se shrani v "premik"
+        if premik:
+            nivo.poteza()
+        if nivo.preveri_ali_na_cilju():
+            ime_nivoja = vse_igre.vrni_ime(id_uporabnika)
+            uporabniki.zigral_level(id_uporabnika, ime_nivoja, nivo.št_potez)
+            premagal_rekord = vsi_nivoji.obnovi_rekord(ime_nivoja, nivo.št_potez)
     bottle.redirect('/dejanska_igra/')
 
 # Seznam levelov
@@ -81,7 +90,7 @@ def seznam():
     # vse_igre.spremeni_napako(uporabnikov_id, None)  # izbrišemo sporočilo za napako
     vse_igre.stanja[uporabnikov_id] = (None, None, None, None)  # izbrišemo sporočilo za napako oz. ustvarimo vrednost za tega uporabnika v slovarju vse_igre.stanja
 
-    return bottle.template(pot("seznam.tpl"), vsi_nivoji=vsi_nivoji.slovar_nivojev.keys(), reseni_nivoji=uporabniki.vrni_rešene_nivoje(uporabnikov_id))
+    return bottle.template(pot("seznam.tpl"), vsi_nivoji=vsi_nivoji.slovar_nivojev, reseni_nivoji=uporabniki.vrni_rešene_nivoje(uporabnikov_id))
 
 @bottle.post('/Level_n/<ime_nivoja>/')
 def pridobivanje_levela(ime_nivoja):
@@ -207,7 +216,6 @@ def urejanje_imena():
     vse_igre.spremeni_napako(id_uporabnika, None)  # izbrišemo sporočilo za napako
     novo_ime = bottle.request.forms.getunicode('ime')  # podpora za šumnike
     stopnja = bottle.request.forms.getunicode('stopnja')
-
     if stopnja in ["2", "3"]:
         nivo = uporabniki.vrni_nivo(id_uporabnika)
         nivo.velikostna_stopnja = int(stopnja)

@@ -5,7 +5,7 @@ import math
 
 os.chdir("UVP")  # pojdi v mapo UVP
 os.chdir("Projektna-naloga")
-os.chdir("testne_slike")
+os.chdir("slike")
 
 def shrani(destinacija, slika):  # brez končnice
     pot = destinacija + ".png"

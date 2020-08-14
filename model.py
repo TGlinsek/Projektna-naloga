@@ -130,9 +130,15 @@ class Matrika:
     __str__ = __repr__
 
 
-nasprotne_smeri = {"s": "j", "j": "s", "v": "z", "z": "v"}
+znaki = ["a", "d", "w", "s"]
 
-rotirane_smeri = {"s": "z", "z": "j", "j": "v", "v": "s"}  # pozitivna smer
+# nasprotne_smeri = {"s": "j", "j": "s", "v": "z", "z": "v"}
+
+# rotirane_smeri = {"s": "z", "z": "j", "j": "v", "v": "s"}  # pozitivna smer
+
+nasprotne_smeri = {znaki[2]: znaki[3], znaki[3]: znaki[2], znaki[1]: znaki[0], znaki[0]: znaki[1]}
+
+rotirane_smeri = {znaki[2]: znaki[0], znaki[0]: znaki[3], znaki[3]: znaki[1], znaki[1]: znaki[2]}  # vrtenje v pozitivno smer
 
 def razberi(niz):
     if niz == "":
@@ -182,7 +188,7 @@ def škatla(velikost, smer):  # vrne niz za posamezno škatlo. Velikost 3 je npr
 def je_škatla(člen):
     if člen == "":
         return False
-    return člen[-1] in ["s", "j", "v", "z"] and člen[:-1] == "-" * (len(člen) - 1)
+    return člen[-1] in znaki and člen[:-1] == "-" * (len(člen) - 1)
 
 
 class Nivo:  # dejansko matrika, ki se spreminja
@@ -198,6 +204,8 @@ class Nivo:  # dejansko matrika, ki se spreminja
             maksimalna_vrstica = max(max(vrsta, key=len), maksimalna_vrstica)
         """
         self.velikostna_stopnja = len(max(max(seznam_seznamov, key=lambda v: len(max(v, key=len))), key=len))  # vrne največjo velikost, ki se pojavi v nivoju
+
+        self.št_potez = 0
 
         množica_objektov_barvnih_škatel = []
         for nabor in seznam_naborov_barvnih_škatel:  # to bi sicer morala biti množica, ampak json ne podpira množic
@@ -226,7 +234,7 @@ class Nivo:  # dejansko matrika, ki se spreminja
         for par_koordinat in množica_objektov_barvnih_škatel:  # vrstni red v seznamu "koord_barvnih_škatel" ni pomemben. V vsakem primeru pride (oz. bi moral priti) isti rezultat
             člen_matrike = self.matrika.preberi_člen(par_koordinat)
             smer, velikost = razberi(člen_matrike)
-            if smer not in ["s", "j", "v", "z"]:
+            if smer not in znaki:
                 raise ValueError("Smer ni ustrezna")
             if type(velikost) == int:
                 if velikost <= 0:
@@ -289,7 +297,7 @@ class Nivo:  # dejansko matrika, ki se spreminja
             # raise ValueError("Polje je že zasedeno!")
 
     def dodaj_škatlo(self, velikost, koordinate):
-        return self.dodaj_element(koordinate, škatla(velikost, "s"))  # return je zato da sporočimo morebitno napako
+        return self.dodaj_element(koordinate, škatla(velikost, znaki[2]))  # return je zato da sporočimo morebitno napako
     
 
     def dodaj_barvno_škatlo(self, velikost, koordinate):
@@ -301,7 +309,7 @@ class Nivo:  # dejansko matrika, ki se spreminja
 
             # tu ne moremo dati odstrani_element, saj ga to zmede (misli, da bomo brisali barvno škatlo)
             self.matrika.zamenjaj_člen(stare_koord, "")  # vzemi koordinate in zbriši škatlo na prejšnjem mestu (če te vrstice ni, ostane navadna škatla)
-        self.slovar_barvnih_škatel[str(velikost)] = (koordinate, "s")
+        self.slovar_barvnih_škatel[str(velikost)] = (koordinate, znaki[2])
     
     def odstrani_element(self, koordinate):
         if self.koord_igralca == koordinate:
@@ -346,7 +354,6 @@ class Nivo:  # dejansko matrika, ki se spreminja
 
     # tole je namenjeno le za prikaz igralcu:
     def matrika_z_igralcem(self):  # in tudi s poudarjenimi barvnimi škatlami
-        # print(self.slovar_barvnih_škatel)
         kopija = self.matrika.kopiraj_sebe()
         for ključ in self.slovar_barvnih_škatel:  # za upodobitev položajev barvnih škatel. Velike črke pomenijo barvne škatle
             koord = self.slovar_barvnih_škatel[ključ][0]
@@ -359,17 +366,20 @@ class Nivo:  # dejansko matrika, ki se spreminja
     
     __repr__ = __str__
 
+    def poteza(self):
+        self.št_potez += 1
+
     def preveri_okolico(self, smer):  # vrne True, kadar se lahko premakne v to smer
         nasprotna_smer = nasprotne_smeri[smer]
         polje_z_igralcem = self.matrika.preberi_člen(self.koord_igralca)  # člen matrike, kjer je igralec
         koord_od_drugega_polja = None
-        if nasprotna_smer == "v":  # gremo v levo
+        if nasprotna_smer == znaki[1]:  # gremo v levo
             koord_od_drugega_polja = self.koord_igralca.vrni_levega_soseda()
-        elif nasprotna_smer == "z":
+        elif nasprotna_smer == znaki[0]:
             koord_od_drugega_polja = self.koord_igralca.vrni_desnega_soseda()
-        elif nasprotna_smer == "j":  # gremo gor
+        elif nasprotna_smer == znaki[3]:  # gremo gor
             koord_od_drugega_polja = self.koord_igralca.vrni_zgornjega_soseda()
-        elif nasprotna_smer == "s":
+        elif nasprotna_smer == znaki[2]:
             koord_od_drugega_polja = self.koord_igralca.vrni_spodnjega_soseda()
         drugo_polje = self.matrika.preberi_člen(koord_od_drugega_polja)  # levo, desno, gornje ...
         
@@ -447,16 +457,16 @@ class Nivo:  # dejansko matrika, ki se spreminja
 
     def premik_v_smer(self, smer):  # to bo uredilo matriko self.matrika
         # leva smer pomeni smer "z"
-        if smer == "z":
+        if smer == znaki[0]:  # v levo
             if self.koord_igralca.x == 0:
                 return False  # False vrnemo, če ni spremembe, True pa, če je
-        if smer == "v":
+        if smer == znaki[1]:  # v desno
             if self.koord_igralca.x == self.matrika.širina - 1:
                 return False
-        if smer == "s":
+        if smer == znaki[2]:  # navzgor
             if self.koord_igralca.y == 0:
                 return False
-        if smer == "j":
+        if smer == znaki[3]:  # navzdol
             if self.koord_igralca.y == self.matrika.višina - 1:
                 return False
         
@@ -485,8 +495,8 @@ class Nivo:  # dejansko matrika, ki se spreminja
             for ključ in b_škatle:
                 if b_škatle[ključ] == True:
                     self.slovar_barvnih_škatel[ključ][0].kopiraj_koordinate_od_drugega(koord_drugega_polja)
-            return True
-        return False
+            return True  # igralec se premakne
+        return False  # igralec se ne premakne
 
     # za vsako polje v matriki lahko definiramo največjo velikost igralca (v kok vlki škatli je lahk), da še lahk gre na tisto polje. Če je prazno polje, je največja velikost neomejena
     # igralec po premiku dobi novo velikost, ki ni nujno ista kot ravnokar definirana količina. Dobimo jo pač s primerjavo členov matrike
@@ -499,7 +509,7 @@ class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level.
     
     def __init__(self, datoteka_z_nivoji="UVP\\Projektna-naloga\\nivoji.json"):
         self.datoteka_z_nivoji = datoteka_z_nivoji
-        # oblika: {"1": (seznam_seznamov, začetni_koord, seznam_naborov_barvnih_škatel), "2": ..., "custom_level": ...}
+        # oblika: {"1": ((seznam_seznamov, začetni_koord, seznam_naborov_barvnih_škatel), min_št_potez), "2": ..., "custom_level": ...}
         # ključ in ime bosta vedno enaka (če bomo sploh imel ime) - ne ne bomo
         with open(self.datoteka_z_nivoji, "r", encoding="utf-8") as f:
             self.slovar_nivojev = json.load(f)
@@ -534,14 +544,22 @@ class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level.
             return default_ime + " " + str(število)
 
     def vrni_nivo(self, id_trenutnega_nivoja):
-        # print(self.slovar_nivojev[id_trenutnega_nivoja])
-        return Nivo(*(deepcopy(self.slovar_nivojev[id_trenutnega_nivoja])))  # če ne kopiramo oz. naredimo samo .copy, bodo nekateri pointerji še kar kazali na isto mesto v pomnilniku. Takrat bi se z igranjem nivoja hkrati spreminjal tudi self.slovar_nivojev, kar pa nočemo. Nivoji se ne smejo spreminjati v objektih tipa VsiNivoji.
+        return Nivo(*(deepcopy(self.slovar_nivojev[id_trenutnega_nivoja][0])))  # če ne kopiramo oz. naredimo samo .copy, bodo nekateri pointerji še kar kazali na isto mesto v pomnilniku. Takrat bi se z igranjem nivoja hkrati spreminjal tudi self.slovar_nivojev, kar pa nočemo. Nivoji se ne smejo spreminjati v objektih tipa VsiNivoji.
     
+    def vrni_rekord(self, id_trenutnega_nivoja):
+        return self.slovar_nivojev[id_trenutnega_nivoja][1]
+
     def dodaj_nivo(self, ime_nivoja, nivo):
         if ime_nivoja in self.slovar_nivojev.keys():
             raise ValueError("Nivo s tem imenom že obstaja!")  # to se itak ne bi smelo zgoditi
-        self.slovar_nivojev[ime_nivoja] = nivo.vrni_parametre()  # VsiNivoji ne vsebuje nivojev, le potrebne podatke za izdelavo le-teh
+        self.slovar_nivojev[ime_nivoja] = [nivo.vrni_parametre(), float("inf")]  # VsiNivoji ne vsebuje nivojev, le potrebne podatke za izdelavo le-teh
         self.naloži_v_datoteko()
+    
+    def obnovi_rekord(self, ime_nivoja, nov_rekord):
+        dozdajšnji_rekord = self.vrni_rekord(ime_nivoja)
+        self.slovar_nivojev[ime_nivoja][1] = min(nov_rekord, dozdajšnji_rekord)
+        self.naloži_v_datoteko()
+        return None if nov_rekord == dozdajšnji_rekord else (nov_rekord < dozdajšnji_rekord)
 
 class VseIgre:
     # pod userid je shranjen 
@@ -588,8 +606,8 @@ def vrni_prazen_nivo(širina, višina):  # imel bo igralca v levem zgornjem kotu
         seznam_seznamov.append([])
         for j in range(širina):
             seznam_seznamov[-1].append("")
-    seznam_seznamov[0][širina - 1] = "s"
-    seznam_seznamov[višina - 1][širina - 1] = "-s"
+    seznam_seznamov[0][širina - 1] = znaki[2]
+    seznam_seznamov[višina - 1][širina - 1] = "-" + znaki[2]
     return Nivo(seznam_seznamov, (0, 0), [(širina - 1, 0), (širina - 1, višina - 1)])
 
 
@@ -626,9 +644,9 @@ class Uporabniki:
     def prost_id_igre(self):
         return str(max([int(niz) for niz in self.idji.keys()], default=-1) + 1)  # json pretvori vse celoštevilske ključe slovarjev v nize
     
-    def zigral_level(self, id_uporabnika, ime_nivoja):
+    def zigral_level(self, id_uporabnika, ime_nivoja, poteze):
         nivoji, ime, urejevalnik = self.idji[id_uporabnika]
-        nivoji.append(ime_nivoja)
+        nivoji.append((ime_nivoja, poteze))
         self.idji[id_uporabnika] = (nivoji, ime, urejevalnik)
         self.naloži_v_datoteko()
     
@@ -656,31 +674,5 @@ class Uporabniki:
     
     def vrni_rešene_nivoje(self, id_uporabnika):
         return self.idji[id_uporabnika][0]
-
-
-class UrejevalnikNivojev:  # level editor
-
-    # None v primeru da začnemo nov nivo od začetka
-    def __init__(self, trenutni_nivo=None, ime=None, širina=None, višina=None):  # klicalo se bo tako: UrejevalnikNivojev(VsiNivoji[ključ], ključ)
-        if trenutni_nivo is None:
-            self.trenutni_nivo = vrni_prazen_nivo(širina, višina)
-            self.ime = "Nepoimenovan nivo"
-        else:
-            self.trenutni_nivo = trenutni_nivo  # Level
-
-    def izbrisi_vse(self):  # resetira nivo
-        self.trenutni_nivo = vrni_prazen_nivo(self.trenutni_nivo.matrika.širina, self.trenutni_nivo.matrika.višina)  # vzame kar iste dimenzije kot so bile pred izbrisom
-    
-
-    # ko submitaš level, ni poti nazaj in je vsem viden.
-
-
-
-
-
-
-
-
-
 
 

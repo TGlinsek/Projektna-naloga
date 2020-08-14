@@ -2,8 +2,11 @@ from PIL import Image, ImageDraw
 import os
 # Inštalacija: v cmd napišemo python -m pip install Pillow
 
-from barve import bar, slovar_velikosti, št_velikosti
+from barve import bar, slovar_velikosti
+from model import znaki
 
+
+št_velikosti = 2  # 2 je default, lahko je tudi več (samo za grafika.py (le tja se spremenljivka importira))
 
 št_pikslov = št_velikosti * 4 + 6  # to je sam na kok delov moramo razdelit sliko. Slika bo torej toliko na kvadrat
 
@@ -24,11 +27,11 @@ draw = ImageDraw.Draw(out, mode="RGBA")  # mode od Image in od ImageDraw mora bi
 # os.chdir("..") je za premikanje ene mape gor
 os.chdir("UVP")  # pojdi v mapo UVP
 os.chdir("Projektna-naloga")
-os.chdir("testne_slike")  # ustvarimo novo mapo z imenom testne_slike, kamor se bodo slike shranjevale
+os.chdir("slike")  # ustvarimo novo mapo z imenom testne_slike, kamor se bodo slike shranjevale
 os.chdir(str(št_velikosti))  # šli bomo v mapo, namenjena za te velikosti
 
 
-smeri = {"s", "j", "v", "z"}
+smeri = set(znaki)
 
 
 def shrani(destinacija, slika):  # brez končnice
@@ -48,19 +51,19 @@ def izriši_sliko(velikost, smer, barva):
     
     indeks = št_velikosti - velikost  # 0 je za najbolj zunanje, potem je 1, itd.
     premik = 2 * indeks  # za vsako spremembo velikosti je treba za dva "piksla" vse skupaj premakniti
-    if smer != "s":
+    if smer != znaki[2]:
         koord1 = (1 + premik, 1 + premik)
         koord2 = (št_pikslov - 1 - premik, 2 + premik)
         izriši_pravokotnik(draw, koord1, koord2, barva)
-    if smer != "j":
+    if smer != znaki[3]:
         koord1 = (1 + premik, št_pikslov - 2 - premik)
         koord2 = (št_pikslov - 1 - premik, št_pikslov - 1 - premik)
         izriši_pravokotnik(draw, koord1, koord2, barva)
-    if smer != "v":
+    if smer != znaki[1]:
         koord1 = (št_pikslov - 2 - premik, 1 + premik)
         koord2 = (št_pikslov - 1 - premik, št_pikslov - 1 - premik)
         izriši_pravokotnik(draw, koord1, koord2, barva)
-    if smer != "z":
+    if smer != znaki[0]:
         koord1 = (1 + premik, 1 + premik)
         koord2 = (2 + premik, št_pikslov - 1 - premik)
         izriši_pravokotnik(draw, koord1, koord2, barva)
