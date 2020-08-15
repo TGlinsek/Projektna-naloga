@@ -1,19 +1,29 @@
+# izriše škatle, skale, igralca in jih shrani v mapo "slike"
 from PIL import Image, ImageDraw
 import os
-# Inštalacija: v cmd napišemo python -m pip install Pillow
 
 from barve import bar, slovar_velikosti
 from model import znaki
 
+from pathlib import Path
 
-št_velikosti = 2  # 2 je default, lahko je tudi več (samo za grafika.py (le tja se spremenljivka importira))
 
-št_pikslov = št_velikosti * 4 + 6  # to je sam na kok delov moramo razdelit sliko. Slika bo torej toliko na kvadrat
+cwd = os.getcwd()
+starš = Path(__file__).parent
 
+os.chdir(starš)  # gremo eno mapo gor, da lahko gremo nazaj eno mapo dol
+os.chdir("slike")
+os.chdir(str(št_velikosti))
+
+# os.chdir("..") je za premikanje ene mape gor
+
+
+št_velikosti = 2  # 2 je default, lahko je tudi več (samo za grafika.py (le tja se spremenljivka uvaža))
+
+št_pikslov = št_velikosti * 4 + 6  # to je samo na koliko delov moramo razdeliti sliko. Slika bo torej toliko, ampak na kvadrat.
 
 # image1 = Image.open("UVP\\Projektna-naloga\\Prazno.png")  
 # https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
-
 
 # tako začnemo risati:
 """
@@ -24,15 +34,7 @@ draw = ImageDraw.Draw(out, mode="RGBA")  # mode od Image in od ImageDraw mora bi
 # črta:
 # draw.line((0, out.size[0], out.size[1], 20), fill=128)  # x1, y1, x2, y2
 
-# os.chdir("..") je za premikanje ene mape gor
-os.chdir("UVP")  # pojdi v mapo UVP
-os.chdir("Projektna-naloga")
-os.chdir("slike")  # ustvarimo novo mapo z imenom testne_slike, kamor se bodo slike shranjevale
-os.chdir(str(št_velikosti))  # šli bomo v mapo, namenjena za te velikosti
-
-
 smeri = set(znaki)
-
 
 def shrani(destinacija, slika):  # brez končnice
     pot = destinacija + ".png"
@@ -77,7 +79,6 @@ def izriši_sliko_v_vse_smeri(velikost, barva):
         izriši_sliko(velikost, smer, barva)
 
 
-
 for ključ in slovar_velikosti:
     if ključ.isdigit():  # le za številske vrednosti
         if int(ključ) > št_velikosti:
@@ -88,6 +89,7 @@ for ključ in slovar_velikosti:
             izriši_sliko_v_vse_smeri(i, barva)
     else:
         izriši_sliko_v_vse_smeri(int(ključ), barva)
+
 
 # igralec
 out = Image.new("RGBA", (100, 100), (255, 0, 0, 0))
@@ -101,8 +103,6 @@ ime = "igralec" + str(št_velikosti)
 shrani(ime, out)
 
 
-
-
 # skala
 out = Image.new("RGBA", (100, 100), (255, 0, 0, 0))  # vsakič je treba posebej novo sliko narediti, drugače ne čečkamo po prazni sliki
 draw = ImageDraw.Draw(out, mode="RGBA")
@@ -114,39 +114,14 @@ izriši_pravokotnik(draw, koord1, koord2, (0, 0, 0))
 ime = "skala" + str(št_velikosti)
 shrani(ime, out)
 
+
 """
-# prazna slika
+# "risanje" prazne slike
 out = Image.new("RGBA", (100, 100), (255, 0, 0, 0))
 
 ime = "praznina" + str(št_velikosti)
 shrani(ime, out)
 """
 
-
-# format izgleda takole:
-# barva = (255, 0, 0)
-# draw.rectangle(((25, 25), (50, 75)), fill=barva)
-
-
 # za prikaz slike bi dali:
 # out.show()
-
-
-"""
-# Zrcaljenje slike
-
-# import required image module
-from PIL import Image
-
-# Open an already existing image
-imageObject = Image.open("neka_slika.jpg")
-
-# Do a flip of left and right
-hori_flippedImage = imageObject.transpose(Image.FLIP_LEFT_RIGHT)
-
-# Show the original image
-imageObject.show()
-
-# Show the horizontal flipped image
-hori_flippedImage.show()
-"""

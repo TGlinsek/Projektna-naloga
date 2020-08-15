@@ -3,8 +3,14 @@ from PIL import Image, ImageDraw
 import os
 import math
 
-os.chdir("UVP")  # pojdi v mapo UVP
-os.chdir("Projektna-naloga")
+from pathlib import Path
+
+
+cwd = os.getcwd()
+starš = Path(__file__).parent
+
+os.chdir(starš)
+
 os.chdir("slike")
 
 def shrani(destinacija, slika):  # brez končnice
