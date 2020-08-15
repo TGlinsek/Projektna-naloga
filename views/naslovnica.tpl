@@ -44,7 +44,7 @@
 
     <div class="input-field col s6">
       <select name= "visina">
-        % for i in range(3, 6):
+        % for i in range(2, 6):
           % if i == 5:
             <option value="{{i}}" selected>{{i}}</option>
           % else:
