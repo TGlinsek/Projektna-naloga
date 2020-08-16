@@ -12,17 +12,26 @@ from pathlib import Path
 
 
 def pridobi_relativno_pot(ime):
-    # ime je npr. "uporabniki.json",
-    # funkcija pa vrne "UVP\\Projektna-naloga\\uporabniki.json"
-
+    """
+    Ime je npr. "uporabniki.json",
+    funkcija pa vrne "UVP\\Projektna-naloga\\uporabniki.json", v primeru, 
+    da imam vsc odprt v mapi, ki vsebuje mapo "UVP"
+    """
     cwd = os.getcwd()
     starš = Path(__file__).parent
     abs_pot = (starš / ime)  # iz relativne poti naredi absolutno
     return os.path.relpath(abs_pot, cwd)
 
 
-def vsi_elementi_seznama_so_isti(seznam):  
-    # pomožna funkcija
+def vsi_elementi_seznama_so_isti(seznam):
+    """
+    Pomožna funkcija, ki preveri, ali so vsi elementi 
+    seznama enaki (z uporabo enačaja "==").
+    
+    Objekti razreda Koordinate so za to funkcijo enaki, 
+    če imajo vsi enak atribut x in enak atribut y.
+    V razredu smo namreč definirali metodo __eq__.
+    """
     if len(seznam) == 0:
         return True
     prvi_clen = seznam[0]
@@ -185,6 +194,12 @@ rotirane_smeri = {znaki[2]: znaki[0],
 
 
 def razberi(niz):
+    """
+    - spremeni "--w" v ("w", 3)
+    - spremeni "s" v ("s", 1)
+    - za "" vrne error
+    - če je v nizu črk več kot ena, potem prav tako vrne error
+    """
     if niz == "":
         return False
     znak = niz[-1]
@@ -198,6 +213,20 @@ def razberi(niz):
 
 
 def razdeli(niz, smer):
+    """
+    - "sjz" v smeri zahoda: "--z" ostane, "sj" gre stran
+    - "szz" v smeri zahoda: "-zz" ostane, "s" gre stran
+    - "zzz" v smeri zahoda: "zzz" ostane, "" gre stran
+    - "sjs" v smeri zahoda: "" ostane, "sjs" gre stran (ne loči se)
+    - "szs" ali "zzs" v smeri zahoda: ne loči se, oz., ostane "", vse gre stran
+    - "": ostane "", stran gre "".
+    - "z" v smeri z: ostane "z", prenos ""
+    - "s" v smeri z: ostane "", prenos "s"
+    - "z-z" v smeri z: ostane "z-z", prenos ""
+    - "zs-z" v smeri z: ostane "---z", gre "zs"
+    - "z-sz" v smeri z: ostane "---z", gre "z-s"
+    - "z-s-z-j-z" v smeri z: ostane "--------z", gre "z-s-z-j"
+    """
     if niz == "":
         return "", ""
     meja = 0
@@ -218,6 +247,13 @@ def razdeli(niz, smer):
 
 
 def združi(prvi_člen, drugi_člen):
+    """
+    - "" + "" = ""
+    - "v" + "" = "v"
+    - "vz" + "--j" = "vzj"
+    - "-j" + "-z" ne gre
+    - "-s" + "--j" = "-sj"
+    """
     vsota = ""
     for par in itertools.zip_longest(prvi_člen, drugi_člen, fillvalue="-"):
         vsota += par[0] if par[1] == "-" else par[1]
@@ -225,17 +261,24 @@ def združi(prvi_člen, drugi_člen):
 
 
 def povečaj(niz, indeks):  
-    # kapitalizira znak v nizu, ki je na mestu številka "indeks"
+    """
+    Kapitalizira znak v nizu, ki je na mestu številka "indeks"
+    """
     return niz[:indeks] + niz[indeks].upper() + niz[indeks + 1:]
 
 
-def škatla(velikost, smer):  
-    # vrne niz za posamezno škatlo. 
-    # Velikost 3 je npr. "--s"
+def škatla(velikost, smer):
+    """ 
+    vrne niz za posamezno škatlo. 
+    Velikost 3 je npr. "--s"
+    """
     return (velikost - 1) * "-" + smer.lower()
 
 
 def je_škatla(člen):
+    """
+    Preveri, ali ta niz predstavlja škatlo
+    """
     if člen == "":
         return False
     return člen[-1] in znaki and člen[:-1] == "-" * (len(člen) - 1)
@@ -590,10 +633,11 @@ class Nivo:  # matrika, ki se spreminja, z nekaj dodatnimi atributi
             Ustvarili bomo novo polje z naslednjo operacijo:
 
             "" + "" = ""
-            "v" + "" = "v"  # operacija je tudi komutativna
+            "v" + "" = "v"
             "vz" + "--j" = "vzj"
             "-j" + "-z" ne gre
             "-s" + "--j" = "-sj"
+            # operacija je tudi komutativna
 
             To operacijo bomo opisali v funkciji združi()
             """
@@ -630,7 +674,11 @@ class Nivo:  # matrika, ki se spreminja, z nekaj dodatnimi atributi
 
 
 class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level. Torej bomo imeli slovar
-
+    """
+    Vsebuje slovar "slovar_nivojev", ki pod ime nivoja shrani nabor, ki vsebuje podatke o:
+    - začetnem stanju nivoja (se tekom igre ne spremeni)
+    - rekord oz. najmanjše število potez, ki so kateremukoli igralcu do zdaj bile potrebne za rešitev nivoja
+    """
     def __init__(self, datoteka_z_nivoji=pridobi_relativno_pot("nivoji.json")):
         self.datoteka_z_nivoji = datoteka_z_nivoji
         # oblika: {"1": ((seznam_seznamov, začetni_koord, seznam_naborov_barvnih_škatel),
@@ -688,6 +736,13 @@ class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level.
 
 
 class VseIgre:
+    """
+    Vsebuje slovar "stanja", ki pod id uporabnika (ki ga dobimo iz piškotka) shrani nabor štirih spremenljivk, v tem vrstnem redu:
+    - ime nivoja, ki ga uporabnik trenutno igra
+    - stanje nivoja, ki je objekt tipa Nivo
+    - trenutni objekt, ki je označen v urejevalcu nivojev
+    - napaka, ki opozori uporabnika o neveljavnem ukazu. To je nabor, prvi člen je ime napake, drugi pa vnos, ki je napako povzročil. Če vnosa ni, je None.
+    """
     # pod userid je shranjen
     def __init__(self):
         self.stanja = {}
@@ -744,7 +799,12 @@ def vrni_prazen_nivo(širina, višina):
 
 
 class Uporabniki:
-
+    """
+    Vsebuje slovar "idji", ki pod uporabnikov id, v tem vrstnem redu, shrani:
+    - seznam naborov, ki vsebujejo ime nivoja, ki ga je ta uporabnik že izdelal, in najmanjše število potez, ki jih je potreboval
+    - ime nivoja, ki ga ima uporabnik trenutno odprtega v urejevalcu nivojev
+    - objekt Nivo, ki je trenutno odprt v urejevalcu nivojev
+    """
     def __init__(self, datoteka_s_stanjem=pridobi_relativno_pot("uporabniki.json")):
         self.datoteka_s_stanjem = datoteka_s_stanjem
         self.idji = {}
@@ -790,7 +850,14 @@ class Uporabniki:
 
     def zigral_level(self, id_uporabnika, ime_nivoja, poteze):
         nivoji, ime, urejevalnik = self.idji[id_uporabnika]
-        nivoji.append((ime_nivoja, poteze))
+        for indeks, nabor in enumerate(nivoji):
+            nivo, št_potez = nabor
+            if nivo == ime_nivoja:
+                poteze = min(poteze, št_potez)  # posodobi osebni rekord za ta nivo
+                nivoji[indeks] = (ime_nivoja, poteze)
+                break
+        else:
+            nivoji.append((ime_nivoja, poteze))
         self.idji[id_uporabnika] = (nivoji, ime, urejevalnik)
         self.naloži_v_datoteko()
 
