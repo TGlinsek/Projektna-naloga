@@ -8,9 +8,22 @@
 % tip = "waves-effect waves-yellow btn"
 % # https://bottlepy.org/docs/dev/stpl.html za znake kot so % ipd
 % št_velikosti = igra.velikostna_stopnja
+
+<!-- Poskrbimo za rekorde -->
+% svetovni_rekord = nivoji[ime][1]
+% pomožni_slovar = {}
+% for i, poteze in reseni_nivoji:
+  % pomožni_slovar[i] = poteze
+% end
+
+% nivo_zigran = ime in pomožni_slovar.keys()
+% uporabnikov_rekord = pomožni_slovar[ime] if nivo_zigran else "Ni še zigrano!"
+
 <!-- Narisati je treba igro -->
 % sez = igra.matrika_z_igralcem().seznam_seznamov
 Število opravljenih potez: {{igra.št_potez}}
+Osebni rekord: {{uporabnikov_rekord}}
+Svetovni rekord: {{svetovni_rekord if svetovni_rekord != float("inf") else "Nihče še ni zigral!"}}
 <table style="border:1px solid black; border-collapse:collapse; width:100%; height:80%;">
   % for vrstica in sez:
     <tr style="border: solid 1px; border-style: dotted;">
@@ -115,7 +128,7 @@
 
 % end
 
-<form action="/seznam_levelov/" method="get">
+<form action="/pridobi_seznam/" method="post">
   <div class="col s12">
     <button class="{{tip}}" type="submit">
       Seznam levelov

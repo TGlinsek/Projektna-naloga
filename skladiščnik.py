@@ -39,30 +39,50 @@ def odpri_nivo(id_levela):
     nivo = vsi_nivoji.vrni_nivo(id_levela)
     return nivo
 
-
 @bottle.get('/')
+def test():
+    return bottle.template(pot("naslovnica.tpl"), povezava_za_bazo=povezava_za_bazo)
+
+@bottle.post('/nalaganje/')
 def obisk_strani():
-    if bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
-                                 secret="SKRIVNOST"):
+    ne_prvi_obisk = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
+                                 secret="SKRIVNOST")
+    if ne_prvi_obisk:
         print("Ponovno si obiskal to stran!")
     else:
+        id_uporabnika = uporabniki.dodaj_uporabnika()
         # prvič, ko uporabnik pride na stran, se mu doda piškotek
         bottle.response.set_cookie('piskotek_ki_pripada_temu_uporabniku',
-                                   uporabniki.dodaj_uporabnika(),
+                                   id_uporabnika,
                                    secret="SKRIVNOST",
-                                   expires=datum_čez_30_dni)
+                                   expires=datum_čez_30_dni,
+                                   path='/')  
+                                   # brez path parametra si bottle za path izbere 
+                                   # ime te metode, torej piškotek ni 
+                                   # več dostopen vsem stranem
+
         # ta piškotek bo shranil seznam vseh imen nivojev,
         # ki jih je uporabnik že zigral,
         # in pa še trenutni level v urejevalniku.
         # To vse shrani v json datoteko
-
     bottle.redirect('/dobrodošel/')
 
+@bottle.post('/nazaj_na_prvo_stran/')
+def prva_stran():
+    bottle.redirect('/dobrodošel/')
 
 @bottle.get('/dobrodošel/')
 def naslovna_stran():
-    return bottle.template(pot("naslovnica.tpl"),
-                           povezava_za_bazo=povezava_za_bazo)
+    id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
+                                 secret="SKRIVNOST")
+    
+    return bottle.template(pot("glavni_meni.tpl"),
+                           povezava_za_bazo=povezava_za_bazo,
+                           št_rešenih_nivojev=len(uporabniki.vrni_rešene_nivoje(id_uporabnika)),
+                           št_vseh_nivojev=len(vsi_nivoji.slovar_nivojev)
+                           )  
+                           # tukaj zraven vstavimo podatek o številu nivojev, ki jih je 
+                           # uporabnik končal, in pa vseh nivojev, ki so na voljo
 
 
 @bottle.get('/igra/')
@@ -74,7 +94,13 @@ def igranje():
                            ime=vse_igre.vrni_ime(id_uporabnika),
                            max_stevilo=vsi_nivoji.število_nivojev,
                            napaka=vse_igre.vrni_napako(id_uporabnika),
-                           povezava_za_bazo=povezava_za_bazo)
+                           povezava_za_bazo=povezava_za_bazo,
+                           reseni_nivoji=uporabniki.vrni_rešene_nivoje(id_uporabnika),
+                           nivoji=vsi_nivoji.slovar_nivojev
+                           )  
+                           # dodali smo še seznam vseh uporabnikovih rešenih nivojev in pa slovar 
+                           # vseh nivojev, da lahko sproti spremljamo "podiranje rekordov" 
+                           # in to uporabniku tudi sporočimo
 
 
 @bottle.post('/igra/')
@@ -119,6 +145,10 @@ def shranjevanje_nivoja():
         vse_igre.spremeni_napako(id_uporabnika, ("nivo", napaka))  # ime je zasedeno
     bottle.redirect('/seznam_levelov/')
 
+
+@bottle.post('/pridobi_seznam/')
+def pridobi():
+    bottle.redirect('/seznam_levelov/')
 
 @bottle.get('/seznam_levelov/')
 def seznam():

@@ -38,6 +38,6 @@
   </tr>
   % end
 </table>
-<form action="/dobrodošel/" method="get">
+<form action="/nazaj_na_prvo_stran/" method="post">
   <button class="{{tip}}" type="submit">Glavni menu</button>
 </form>

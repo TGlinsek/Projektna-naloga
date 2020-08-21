@@ -207,6 +207,6 @@
   <button class="{{tip}}" type="submit">Shrani nivo</button>
 </form>
 
-<form action="/seznam_levelov/" method="get">
+<form action="/pridobi_seznam/" method="post">
   <button class="{{tip}}" type="submit">Nazaj na seznam nivojev</button>
 </form>
