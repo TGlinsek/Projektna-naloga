@@ -729,10 +729,13 @@ class VsiNivoji:  # v vrstnem redu - ampak ne vsi, kr lah mamo tut custom level.
         self.naloži_v_datoteko()
 
     def obnovi_rekord(self, ime_nivoja, nov_rekord):
-        dozdajšnji_rekord = self.vrni_rekord(ime_nivoja)
+        # nov rekord je samo število potez v trenutni igri
+        # ni nujno, da bo nov_rekord dejanski rekord
+        dozdajšnji_rekord = self.vrni_rekord(ime_nivoja)  # rekord nivoja
         self.slovar_nivojev[ime_nivoja][1] = min(nov_rekord, dozdajšnji_rekord)
         self.naloži_v_datoteko()
-        return None if nov_rekord == dozdajšnji_rekord else (nov_rekord < dozdajšnji_rekord)
+        stanje = None if nov_rekord == dozdajšnji_rekord else (nov_rekord < dozdajšnji_rekord)
+        return (stanje, dozdajšnji_rekord)
 
 
 class VseIgre:
@@ -816,7 +819,7 @@ class Uporabniki:
         with open(self.datoteka_s_stanjem, "r", encoding="utf-8") as f:
             placeholder_slovar = json.load(f)
             # {1: (["1", "2", "4"], Nivo()), 2: ...}
-            # namesto bomo imeli ([zigrani nivoji], ime, stanje_nivoja)
+            # namesto bomo imeli ([dokončani nivoji], ime, stanje_nivoja)
         for ključ in placeholder_slovar:
             stanje_nivoja = placeholder_slovar[ključ][2]
             if stanje_nivoja is None:
@@ -848,18 +851,28 @@ class Uporabniki:
         return str(max([int(niz) for niz in self.idji.keys()], default=-1) + 1)
         # json pretvori vse celoštevilske ključe slovarjev v nize
 
-    def zigral_level(self, id_uporabnika, ime_nivoja, poteze):
+    def dokončal_nivo(self, id_uporabnika, ime_nivoja, poteze):
         nivoji, ime, urejevalnik = self.idji[id_uporabnika]
+        stanje = False
         for indeks, nabor in enumerate(nivoji):
             nivo, št_potez = nabor
             if nivo == ime_nivoja:
+                if poteze < št_potez:  # nov rekord
+                    stanje = True
+                elif poteze <= št_potez:
+                    stanje = None
                 poteze = min(poteze, št_potez)  # posodobi osebni rekord za ta nivo
                 nivoji[indeks] = (ime_nivoja, poteze)
                 break
-        else:
+        else:  # če se break ne izvede
             nivoji.append((ime_nivoja, poteze))
+            # če je uporabnik ta nivo dokončal prvič
+            št_potez = float("inf")
         self.idji[id_uporabnika] = (nivoji, ime, urejevalnik)
         self.naloži_v_datoteko()
+        return (stanje, št_potez)
+        # vrne False, če ni novega rekorda oz. smo prvič dokončali ta nivo, 
+        # drugače True oz. None, če pride do izenačenja
 
     def spremenil_ime(self, id_uporabnika, novo_ime):
         nivoji, _, nivo = self.idji[id_uporabnika]

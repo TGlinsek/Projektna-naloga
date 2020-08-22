@@ -5,6 +5,7 @@
 
 % default_barva = "blue lighten-3"  # lahko tudi "light-green accent-2"
 % opozorilna_barva = "red lighten-3"
+% obvestilna_barva = "yellow lighten-4"
 % tip = "waves-effect waves-yellow btn"
 % # https://bottlepy.org/docs/dev/stpl.html za znake kot so % ipd
 % št_velikosti = igra.velikostna_stopnja
@@ -16,27 +17,37 @@
   % pomožni_slovar[i] = poteze
 % end
 
-% nivo_zigran = ime in pomožni_slovar.keys()
-% uporabnikov_rekord = pomožni_slovar[ime] if nivo_zigran else "Ni še zigrano!"
+% nivo_dokončan = ime in pomožni_slovar.keys()
+% uporabnikov_rekord = pomožni_slovar[ime] if nivo_dokončan else "Ni še dokončano!"
 
-<!-- Narisati je treba igro -->
+<!--
 % sez = igra.matrika_z_igralcem().seznam_seznamov
-Število opravljenih potez: {{igra.št_potez}}
-Osebni rekord: {{uporabnikov_rekord}}
-Svetovni rekord: {{svetovni_rekord if svetovni_rekord != float("inf") else "Nihče še ni zigral!"}}
+<div class="row">
+  <div class="{{default_barva}} z-depth-1 card-panel col s3">
+    <p>
+      Število opravljenih potez: {{igra.št_potez}}
+    </p>
+  </div>
+</div> -->
+<div style="width: 50%; display: inline-block;">Število opravljenih potez: {{igra.št_potez}}</div>
+<div style="width: 49%; display: inline-block; text-align: right;">Ime nivoja: {{ime}}</div>
+
+<!-- Narisati je treba igro: -->
 <table style="border:1px solid black; border-collapse:collapse; width:100%; height:80%;">
   % for vrstica in sez:
     <tr style="border: solid 1px; border-style: dotted;">
       % for člen in vrstica:
         <td style="border: solid 1px; border-style: dotted;">
           % counter = 0
-          % if člen == "":
-            <div style="position: relative; top: 0; left: 0; text-align: center;">
-              <img src="/Projektna-naloga/slike/praznina.png" alt="Slike ni na tem naslovu!" class="spodnji"/>
-            </div>
-            % continue
-          % end
           <div style="position: relative; top: 0; left: 0; text-align: center;">
+
+            % if člen == "":
+              <img src="/Projektna-naloga/slike/praznina.png" alt="Slike ni na tem naslovu!" class="spodnji"/>
+              </div>  <!-- Ker sledi ukaz "continue", moramo zaključiti trenutne elemente (div in td) -->
+              </td>
+              % continue
+            % end
+
             % for indeks, znak in enumerate(člen):
               % povezava = "skatla"
               % barva = "crna"
@@ -77,21 +88,57 @@ Svetovni rekord: {{svetovni_rekord if svetovni_rekord != float("inf") else "Nih�
 
 % if napaka is not None:
 <div class="row">
-  <div class="{{opozorilna_barva}} z-depth-1 card-panel">
+  % ime_napake = napaka[0]
+  % vsebina_napake = napaka[1]
+  % if ime_napake == "smer":
+  <div class="{{opozorilna_barva}} z-depth-1 card-panel col s12">
     <p>
-      % if napaka[0] == "smer":
-        Vnos {{napaka[1]}} ni veljaven!
+      Vnos "{{vsebina_napake}}"" ni veljaven!
+    </p>
+  </div>
+  % end
+
+  % if ime_napake == "rekord":
+  <div class="{{default_barva}} z-depth-1 card-panel col s12">
+    <h5>
+      Čestitke!
+    </h5>
+  </div>
+  <div class="{{default_barva}} z-depth-1 card-panel col s4 offset-s4">
+    <p>
+      % if vsebina_napake is None:
+        Izenačili ste dosedanji rekord!
+      % elif vsebina_napake:
+        % if napaka[2] == float("inf"):
+          Prvi ste dokončali ta nivo!
+        % else:
+            % sporočilo = "Podrli ste dosedanji rekord! Prejšnji rekord je bil " + str(napaka[2])
+            % if napaka[4] != float("inf"):
+              % if napaka[4] == napaka[2]:
+                % sporočilo += ", kot tudi vaš osebni rekord."
+              % else:
+                % sporočilo += ", vaš osebni rekord pa je bil" + str(napaka[4])
+              % end
+            % else:
+              % sporočilo += "."
+            % end
+            {{sporočilo}}
+        % end
+      % elif napaka[3] is None:
+        Izenačili ste osebni rekord!
+      % elif napaka[3] and napaka[4] != float("inf"):
+        Podrli ste osebni rekord! Prejšnji osebni rekord je bil {{napaka[4]}}.
+      % else:
+        Uspelo vam je!
       % end
     </p>
   </div>
+  % end
 </div>
 % end
 
 
 % if igra.preveri_ali_na_cilju():
-  <div class="row">
-    <div class="{{default_barva}} z-depth-1 card-panel"><h5>Uspelo vam je!</h5></div>
-  </div>
   % if ime.isdigit():
     % if int(ime) < max_stevilo:
       <form action="/nalaganje_nivoja/{{int(ime) + 1}}/" method="post">
@@ -100,7 +147,13 @@ Svetovni rekord: {{svetovni_rekord if svetovni_rekord != float("inf") else "Nih�
         </button>
       </form>
     % else:
-      To je bil zadnji uradni nivo. Lahko pa poskusite katerega izmed tistih, ki so jih oblikovali uporabniki.
+      <div class="row">
+        <div class="{{obvestilna_barva}} z-depth-1 card-panel col s12">
+          <p>
+            To je bil zadnji uradni nivo. Lahko pa poskusite katerega izmed tistih, ki so jih oblikovali uporabniki.
+          </p>
+        </div>
+      </div>
     % end
     % # za custom nivoji ni naslednjega nivoja
   % end
@@ -127,6 +180,12 @@ Svetovni rekord: {{svetovni_rekord if svetovni_rekord != float("inf") else "Nih�
   </form>
 
 % end
+<div class="divider"></div>
+
+<div class="row">
+  <div class="{{default_barva}} z-depth-1 card-panel col s8"><h6>Osebni rekord: {{uporabnikov_rekord}}</h6></div>
+  <div class="{{default_barva}} z-depth-1 card-panel col s3 offset-s1"><h6>Svetovni rekord: {{svetovni_rekord if svetovni_rekord != float("inf") else "Nihče še ni dokončal nivoja!"}}</h6></div>
+</div>
 
 <form action="/pridobi_seznam/" method="post">
   <div class="col s12">

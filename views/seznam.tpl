@@ -5,7 +5,7 @@
 <table style="width:100%;">
   <tr>
     <th>Ime nivoja</th>
-    <th>Že zigran?</th>
+    <th>Že dokončan?</th>
     <th>Osebni rekord</th>
     <th>Rekord</th>
     <th>Igraj</th>
@@ -20,11 +20,11 @@
   % for lvl in vsi_nivoji.keys():
   <tr style="border: 1px solid black;">
     <td>{{lvl}}</td>
-    % nivo_zigran = lvl in pomožni_slovar.keys()
-    <td>{{"Da" if nivo_zigran else "Ne"}}</td>
-    <td>{{pomožni_slovar[lvl] if nivo_zigran else "nedefinirano"}}</td>
+    % nivo_dokončan = lvl in pomožni_slovar.keys()
+    <td>{{"Da" if nivo_dokončan else "Ne"}}</td>
+    <td>{{pomožni_slovar[lvl] if nivo_dokončan else "Nedefinirano"}}</td>
     % št_potez = vsi_nivoji[lvl][1]
-    <td>{{"Nihče še ni zigral" if št_potez == float("inf") else št_potez}}</td>
+    <td>{{"Nihče še ni dokončal" if št_potez == float("inf") else št_potez}}</td>
     <td>
       <form action="/nalaganje_nivoja/{{lvl}}/" method="post">
         <button class="{{tip}}" type="submit">Igraj</button>

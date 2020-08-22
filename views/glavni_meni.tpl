@@ -1,7 +1,11 @@
 % rebase(povezava_za_bazo, title="Naslov")
 % tip = "waves-effect waves-yellow btn"
 % default_barva = "blue lighten-3"  # lahko tudi "light-green accent-2"
-Glavni meni
+
+<div class="row">
+  <div class="{{default_barva}} z-depth-1 card-panel"><h4 class="center-align">Glavni meni</h4></div>
+</div>
+
 <form action="/nalaganje_nivoja/1/" method="post">
   <div class="col s12">
     <button class="{{tip}}" type="submit">
@@ -9,8 +13,13 @@ Glavni meni
     </button>
   </div>
 </form>
-{{št_rešenih_nivojev}}
-{{št_vseh_nivojev}}
+
+<div class="divider"></div>
+
+<div class="row">
+  <div class="{{default_barva}} z-depth-1 card-panel col s6"><h6>Do sedaj ste rešili {{št_rešenih_nivojev}} od skupno {{št_vseh_nivojev}} nivojev.</h6></div>
+</div>
+
 <form action="/pridobi_seznam/" method="post">
   <div class="col s12">
     <button class="{{tip}}" type="submit">
@@ -20,8 +29,9 @@ Glavni meni
 </form>
 
 <div class="divider"></div>
+
 <div class="row">
-  <div class="{{default_barva}} z-depth-1 card-panel"><h6>Lahko tudi ustvariš svoj nivo:</h6></div>
+  <div class="{{default_barva}} z-depth-1 card-panel col s6"><h6>Lahko tudi ustvarite svoj nivo:</h6></div>
 </div>
 
 <form action="/urejanje_nivoja/" method="post">
@@ -64,6 +74,6 @@ Glavni meni
   </div>
 
   <button class="{{tip}}" type="submit">
-    Ustvari svoj nivo
+    Ustvarite svoj nivo
   </button>
 </form>
