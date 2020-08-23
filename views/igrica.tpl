@@ -190,7 +190,7 @@
 <form action="/pridobi_seznam/" method="post">
   <div class="col s12">
     <button class="{{tip}}" type="submit">
-      Seznam levelov
+      Seznam nivojev
     </button>
   </div>
 </form>

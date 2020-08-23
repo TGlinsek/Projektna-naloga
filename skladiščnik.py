@@ -18,7 +18,7 @@ veja_za_slike = os.path.relpath(starš, cwd)
 povezava_za_bazo = os.path.relpath((abs_pot / "osnova.tpl").resolve(), cwd)
 
 
-datum_čez_30_dni = datetime.datetime.now() + datetime.timedelta(days=30)
+datum_čez_10_let = datetime.datetime.now() + datetime.timedelta(days=(365 * 10))
 
 # ta objekt bo spremljal vse dosedaj zasedene id-je
 # (to so samo integerji (oz. integerji, pretvorjeni v nize)).
@@ -39,11 +39,23 @@ def odpri_nivo(id_levela):
     nivo = vsi_nivoji.vrni_nivo(id_levela)
     return nivo
 
+
 @bottle.get('/')
-def test():
-    ne_prvi_obisk = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
+def naslovna_stran():
+    # to je None, če je to prvi obisk
+    id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
                                  secret="SKRIVNOST")
-    return bottle.template(pot("naslovnica.tpl"), prvi_obisk=(ne_prvi_obisk is None), povezava_za_bazo=povezava_za_bazo)
+    if not id_uporabnika:
+        return bottle.template(pot("naslovnica.tpl"), povezava_za_bazo=povezava_za_bazo)
+
+    return bottle.template(pot("glavni_meni.tpl"),
+                           povezava_za_bazo=povezava_za_bazo,
+                           št_rešenih_nivojev=len(uporabniki.vrni_rešene_nivoje(id_uporabnika)),
+                           št_vseh_nivojev=len(vsi_nivoji.slovar_nivojev)
+                           )
+                           # tukaj zraven vstavimo podatek o številu nivojev, ki jih je 
+                           # uporabnik končal, in pa vseh nivojev, ki so na voljo
+
 
 @bottle.post('/nalaganje/')
 def obisk_strani():
@@ -58,7 +70,7 @@ def obisk_strani():
         bottle.response.set_cookie('piskotek_ki_pripada_temu_uporabniku',
                                    id_uporabnika,
                                    secret="SKRIVNOST",
-                                   expires=datum_čez_30_dni,
+                                   expires=datum_čez_10_let,
                                    path='/')  
                                    # brez path parametra si bottle za path izbere 
                                    # ime te metode, torej piškotek ni 
@@ -66,26 +78,14 @@ def obisk_strani():
 
         # ta piškotek bo shranil seznam vseh imen nivojev,
         # ki jih je uporabnik že dokončal,
-        # in pa še trenutni level v urejevalniku.
+        # in pa še trenutni nivo v urejevalniku.
         # To vse shrani v json datoteko
-    bottle.redirect('/dobrodošel/')
+    bottle.redirect('/')
+
 
 @bottle.post('/nazaj_na_prvo_stran/')
 def prva_stran():
-    bottle.redirect('/dobrodošel/')
-
-@bottle.get('/dobrodošel/')
-def naslovna_stran():
-    id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
-                                 secret="SKRIVNOST")
-    
-    return bottle.template(pot("glavni_meni.tpl"),
-                           povezava_za_bazo=povezava_za_bazo,
-                           št_rešenih_nivojev=len(uporabniki.vrni_rešene_nivoje(id_uporabnika)),
-                           št_vseh_nivojev=len(vsi_nivoji.slovar_nivojev)
-                           )  
-                           # tukaj zraven vstavimo podatek o številu nivojev, ki jih je 
-                           # uporabnik končal, in pa vseh nivojev, ki so na voljo
+    bottle.redirect('/')
 
 
 @bottle.get('/igra/')
@@ -154,6 +154,7 @@ def shranjevanje_nivoja():
 def pridobi():
     bottle.redirect('/seznam_levelov/')
 
+
 @bottle.get('/seznam_levelov/')
 def seznam():
     # pridobi id od uporabnika, da dobimo seznam nivojev, ki jih je že dokončal
@@ -172,7 +173,7 @@ def seznam():
 
 @bottle.post('/nalaganje_nivoja/<ime_nivoja>/')
 def pridobivanje_levela(ime_nivoja):
-    # naloži level
+    # naloži nivo
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku',
                                               secret="SKRIVNOST")
     nivo = odpri_nivo(ime_nivoja)
@@ -236,8 +237,6 @@ def urejanje():
 
 @bottle.post('/urejevalec/<niz>/')
 def poteza_urejanje(niz):
-    print(niz)
-    print("Nižek: " + niz)
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
                                               secret="SKRIVNOST")
     vse_igre.spremeni_napako(id_uporabnika, None)  # izbrišemo sporočilo za napako
@@ -288,7 +287,6 @@ def poteza_urejanje(niz):
             else:
                 raise ValueError("Škatla ni ne velika ne mala!")  # to se naj ne bi zgodilo
     else:  # sprememba objekta:  vse_igre.spremeni_objekt(id_uporabnika, nov_objekt)
-        print(niz)
         vse_igre.spremeni_objekt(id_uporabnika, niz)  # tu se samo spremeni objekt ki je shranjen
         # objekt je lahko tudi puscica1 ali puscica2
 

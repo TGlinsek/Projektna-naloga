@@ -7,7 +7,7 @@
 % tip = "waves-effect waves-yellow btn"
 % # https://bottlepy.org/docs/dev/stpl.html za znake kot so % ipd
 % št_velikosti = igra.velikostna_stopnja
-% alt_sporočilo = "Premajhna_velikost_levela"
+% alt_sporočilo = "Premajhna_velikost_nivoja"
 
 <!-- Narišemo matriko -->
 % sez = igra.matrika_z_igralcem().seznam_seznamov

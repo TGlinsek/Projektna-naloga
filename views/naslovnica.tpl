@@ -2,11 +2,7 @@
 % tip = "waves-effect waves-yellow btn"
 % default_barva = "blue lighten-3"  # lahko tudi "light-green accent-2"
 
-% if prvi_obisk:
-  Dobrodošli!
-% else:
-  Dobrodošli nazaj!
-% end
+Dobrodošli!
 
 <form action="/nalaganje/" method="post">
   <div class="col s12">
