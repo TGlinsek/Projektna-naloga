@@ -134,7 +134,7 @@ def poteza():
     bottle.redirect('/igra/')
 
 
-# Seznam levelov
+# Seznam nivojev
 @bottle.post('/shrani_nivo/')
 def shranjevanje_nivoja():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku',
@@ -147,15 +147,15 @@ def shranjevanje_nivoja():
     napaka = vsi_nivoji.dodaj_nivo(ime, nivo)
     if napaka:
         vse_igre.spremeni_napako(id_uporabnika, ("nivo", napaka))  # ime je zasedeno
-    bottle.redirect('/seznam_levelov/')
+    bottle.redirect('/seznam_nivojev/')
 
 
 @bottle.post('/pridobi_seznam/')
 def pridobi():
-    bottle.redirect('/seznam_levelov/')
+    bottle.redirect('/seznam_nivojev/')
 
 
-@bottle.get('/seznam_levelov/')
+@bottle.get('/seznam_nivojev/')
 def seznam():
     # pridobi id od uporabnika, da dobimo seznam nivojev, ki jih je že dokončal
     uporabnikov_id = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku',
@@ -184,13 +184,13 @@ def pridobivanje_levela(ime_nivoja):
 
 @bottle.post('/urejanje_nivoja/<ime_nivoja>/')
 def prid_levela(ime_nivoja):
-    # tukaj naložimo level, za urejanje v urejevalcu levelov
+    # tukaj naložimo nivo, za urejanje v urejevalcu nivojev
 
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku',
                                               secret="SKRIVNOST")
     nivo = odpri_nivo(ime_nivoja)
 
-    # ne potrebujemo imena in levela od prej, zato je None
+    # ne potrebujemo imena in nivoja od prej, zato je None
     # (vse_igre namreč ne shranjuje informacij urejevalnika)
     vse_igre.stanja[id_uporabnika] = (None, None, "+", None)
 

@@ -69,7 +69,7 @@
                 % ime_razreda = str(indeks + 1)
               % end
               % counter += 1
-              % povezava += str(št_velikosti)  # dodamo "velikostni razred trenutnega levela"
+              % povezava += str(št_velikosti)  # dodamo "velikostni razred trenutnega nivoja"
 
               % if counter == 1:  # counter je vedno vsaj 1. Če je 1, je to spodnja slika, če več, je nespodnja
                 % ime_razreda = "spodnji"

@@ -46,7 +46,7 @@
                   % povezava += str(indeks + 1) + znak.lower() + "_" + barva
                 % end
                 % counter += 1
-                % povezava += str(št_velikosti)  # dodamo "velikostni razred trenutnega levela"
+                % povezava += str(št_velikosti)  # dodamo "velikostni razred trenutnega nivoja"
               % end
 
               <button class="osnovni" type="submit"><img src="/Projektna-naloga/slike/{{št_velikosti}}/{{povezava}}.png" alt={{alt_sporočilo}}/></button>
@@ -125,7 +125,7 @@
                   % povezava += str(indeks + 1) + znak.lower() + "_" + barva
                 % end
 
-                % povezava += str(št_velikosti)  # dodamo "velikostni razred trenutnega levela"
+                % povezava += str(št_velikosti)  # dodamo "velikostni razred trenutnega nivoja"
 
                 % if niz == "puscica1": # itak samo enkrat na zanko pride do sem
                   <button class={{razred}} type="submit"><img src="/Projektna-naloga/slike/puscica+.png" alt={{alt_sporočilo}}/></button>
