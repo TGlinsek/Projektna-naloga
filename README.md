@@ -13,3 +13,8 @@ Prikaže se spletna stran, kjer lahko kliknete na gumb:
 Za premikanje igralca uporabnik pritisne gumb "Pošlji ukaz". Če se vam v igri zatakne, lahko ponastavite nivo s klikom na gumb "Ponastavi nivo".
 
 Ko oblikujete nivo, najprej izberite objekt iz spodnje tabele, ki se bo s tem obarval. Nato pritisnite poljubno polje v tabeli, da izbran objekt postavite tja. Za izbris objekta najprej izberite prazno polje. Za rotiranje zabojev izberite puščico. Nivo lahko preimenujete s klikom na gumb "Zamenjaj ime". Če želite več različnih velikosti zabojev, jo lahko izberete iz spustnega menija in potrdite s klikom na gumb "Zamenjaj število velikosti". Ko ste končali z oblikovanjem, kliknite gumb "Shrani nivo". Nivo se bo potem dodal na seznam vseh nivojev. Ko nivo shranite, je viden vsem ostalim uporabnikom. Izbris nivoja ni možen.
+
+## Odpravljanje težav
+- prepričajte se, da so vse datoteke v ustreznih mapah,
+- če se stran dolgo nalaga, jo poskusite osvežiti,
+- poskusite pobrisati morebitne stare piškotke.
