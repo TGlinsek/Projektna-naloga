@@ -7,15 +7,24 @@ import os
 from pathlib import Path
 
 cwd = os.getcwd()
-starš = Path(__file__).parent
+prava_pot = os.path.realpath(__file__)  # pot do tele datoteke
+starš = Path(prava_pot).parent  # pot do mape, kjer se nahaja trenutna datoteka
+relativna_pot = os.path.relpath(starš, start=os.getcwd())
+
+
+# starš = Path(__file__).parent
 abs_pot = (starš / "views")  # iz relativne poti naredi absolutno
 
 
-views_veja = os.path.relpath(abs_pot, cwd)  # views_veja = "UVP\\Projektna-naloga\\views"
-veja_za_slike = os.path.relpath(starš, cwd)
+# views_veja = os.path.relpath(abs_pot, starš.parent.parent)  # views_veja = "UVP\\Projektna-naloga\\views"
+veja_za_slike = os.path.relpath(starš, starš.parent.parent)
 
+# views_veja = "Projektna-naloga\\views"
+# veja_za_slike = "Projektna-naloga"
+# tudi to dvoje bi šlo
 
-povezava_za_bazo = os.path.relpath((abs_pot / "osnova.tpl").resolve(), cwd)
+# povezava_za_bazo = os.path.relpath((abs_pot / "osnova.tpl").resolve(), starš.parent.parent)
+povezava_za_bazo = os.path.relpath(starš / "views" / "osnova.tpl", start=os.getcwd())
 
 
 datum_čez_10_let = datetime.datetime.now() + datetime.timedelta(days=(365 * 10))
@@ -31,8 +40,10 @@ vsi_nivoji = model.VsiNivoji()
 vse_igre = model.VseIgre()
 
 
+"""
 def pot(ime_datoteke):  # ime je npr. igra.tpl
     return os.path.join(views_veja, ime_datoteke)
+"""
 
 
 def odpri_nivo(id_levela):
@@ -46,9 +57,9 @@ def naslovna_stran():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
                                  secret="SKRIVNOST")
     if not id_uporabnika:
-        return bottle.template(pot("naslovnica.tpl"), povezava_za_bazo=povezava_za_bazo)
-
-    return bottle.template(pot("glavni_meni.tpl"),
+        return bottle.template(str(relativna_pot) + "\\views\\naslovnica.tpl", povezava_za_bazo=povezava_za_bazo)
+    
+    return bottle.template(str(relativna_pot) + "\\views\\glavni_meni.tpl",
                            povezava_za_bazo=povezava_za_bazo,
                            št_rešenih_nivojev=len(uporabniki.vrni_rešene_nivoje(id_uporabnika)),
                            št_vseh_nivojev=len(vsi_nivoji.slovar_nivojev)
@@ -92,7 +103,7 @@ def prva_stran():
 def igranje():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', secret="SKRIVNOST")
 
-    return bottle.template(pot("igrica.tpl"),
+    return bottle.template(str(relativna_pot) + "\\views\\igrica.tpl",
                            igra=vse_igre.vrni_nivo(id_uporabnika),
                            ime=vse_igre.vrni_ime(id_uporabnika),
                            max_stevilo=vsi_nivoji.število_nivojev,
@@ -165,7 +176,7 @@ def seznam():
     # vrednost za tega uporabnika v slovarju vse_igre.stanja
     vse_igre.stanja[uporabnikov_id] = (None, None, None, None)
 
-    return bottle.template(pot("seznam.tpl"),
+    return bottle.template(str(relativna_pot) + "\\views\\seznam.tpl",
                            vsi_nivoji=vsi_nivoji.slovar_nivojev,
                            reseni_nivoji=uporabniki.vrni_rešene_nivoje(uporabnikov_id),
                            povezava_za_bazo=povezava_za_bazo)
@@ -227,7 +238,7 @@ def urejanje():
     id_uporabnika = bottle.request.get_cookie('piskotek_ki_pripada_temu_uporabniku', 
                                               secret="SKRIVNOST")
 
-    return bottle.template(pot("urejevalec.tpl"),
+    return bottle.template(str(relativna_pot) + "\\views\\urejevalec.tpl",
                            igra=uporabniki.vrni_nivo(id_uporabnika),
                            ime=uporabniki.vrni_ime(id_uporabnika),
                            izbran_objekt=vse_igre.vrni_objekt(id_uporabnika),

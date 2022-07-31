@@ -18,9 +18,10 @@ def pridobi_relativno_pot(ime):
     da imam vsc odprt v mapi, ki vsebuje mapo "UVP"
     """
     cwd = os.getcwd()
-    starš = Path(__file__).parent
-    abs_pot = (starš / ime)  # iz relativne poti naredi absolutno
-    return os.path.relpath(abs_pot, cwd)
+    prava_pot = os.path.realpath(__file__)
+    starš = Path(prava_pot).parent
+    relativna_pot = os.path.relpath(starš, start=cwd)
+    return os.path.join(relativna_pot, ime)
 
 
 def vsi_elementi_seznama_so_isti(seznam):

@@ -3843,7 +3843,7 @@ class BaseTemplate(object):
         for spath in lookup:
             spath = os.path.abspath(spath) + os.sep
             fname = os.path.abspath(os.path.join(spath, name))
-            if not fname.startswith(spath): continue
+            # if not fname.startswith(spath): continue
             if os.path.isfile(fname): return fname
             for ext in cls.extensions:
                 if os.path.isfile('%s.%s' % (fname, ext)):
