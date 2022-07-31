@@ -17,7 +17,7 @@ abs_pot = (starš / "views")  # iz relativne poti naredi absolutno
 
 
 # views_veja = os.path.relpath(abs_pot, starš.parent.parent)  # views_veja = "UVP\\Projektna-naloga\\views"
-veja_za_slike = os.path.relpath(starš, starš.parent.parent)
+# veja_za_slike = os.path.relpath(starš, starš.parent.parent)
 
 # views_veja = "Projektna-naloga\\views"
 # veja_za_slike = "Projektna-naloga"
@@ -334,7 +334,7 @@ def urejanje_imena():
 # nujno je treba dodati path, če imamo folder namesto slike
 @bottle.get('/Projektna-naloga/<mapa:path>')
 def serve_pictures(mapa):
-    return bottle.static_file(mapa, root=veja_za_slike)
+    return bottle.static_file(mapa, root=relativna_pot)
 
 
 bottle.run()
