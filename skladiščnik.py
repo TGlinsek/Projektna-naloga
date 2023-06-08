@@ -59,6 +59,9 @@ def naslovna_stran():
     if not id_uporabnika:
         return bottle.template(str(relativna_pot) + "\\views\\naslovnica.tpl", povezava_za_bazo=povezava_za_bazo)
     
+    if id_uporabnika not in uporabniki.idji:
+	    raise Exception("Prosimo, izbrišite piškotke iz mesta http://127.0.0.1:8080/ in poženite aplikacijo še enkrat.")
+    
     return bottle.template(str(relativna_pot) + "\\views\\glavni_meni.tpl",
                            povezava_za_bazo=povezava_za_bazo,
                            št_rešenih_nivojev=len(uporabniki.vrni_rešene_nivoje(id_uporabnika)),
