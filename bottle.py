@@ -69,8 +69,9 @@ if __name__ == '__main__':
 ###############################################################################
 
 
-import base64, calendar, cgi, email.utils, functools, hmac, itertools,\
+import base64, calendar, email.utils, functools, hmac, itertools,\
        mimetypes, os, re, tempfile, threading, time, types, warnings, weakref, hashlib
+# import cgi  # knjižnica, ki jo je treba posebej naložiti. Mislim, da za našo aplikacijo ni relevantna.
 
 from types import FunctionType
 from datetime import date as datedate, datetime, timedelta
